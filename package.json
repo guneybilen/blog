@@ -17,6 +17,7 @@
     "ejs": "~2.6.1",
     "empty-dir": "^2.0.0",
     "express": "~4.16.1",
+    "helmet": "^4.6.0",
     "hide-powered-by": "^1.1.0",
     "http-errors": "~1.6.3",
     "http-status-codes": "^2.1.4",

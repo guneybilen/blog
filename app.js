@@ -3,6 +3,7 @@ var express = require("express");
 var path = require("path");
 var logger = require("morgan");
 var favicon = require("serve-favicon");
+const helmet = require("helmet");
 var cookieFlashMessages = require("cookie-flash-messages");
 const cors = require("cors");
 const { StatusCodes: HttpStatus } = require("http-status-codes");
@@ -17,6 +18,7 @@ require("dotenv").config();
 // const router = require("./routes");
 
 var app = express();
+app.use(helmet());
 app.use(cookieParser());
 // app.use(
 //   cors({

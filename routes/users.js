@@ -1,67 +1,3 @@
-/* var express = require("express");
-var csrf = require("csurf");
-var app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-var parseForm = express.urlencoded({ extended: false });
-var router = express.Router();
-const multer = require("multer");
-var colors = require("colors");
-const { authMiddleware: middleware } = require("@app/middleware");
-const { userController: user } = require("@app/module");
-const { textController: text } = require("@app/module");
-const { blogEdit } = require("../module/auth/service");
-
-var config = multer.memoryStorage({
-  filename: function (req, file = {}, cb) {
-    // cb(null, new Date().toISOString() + file.originalname);
-    // console.log("req.originalname ", req.originalname);
-    cb(null, file.originalname);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-    cb(new Error("Please upload an image."));
-  } else {
-    cb(undefined, true);
-  }
-};
-
-const upload = multer({
-  storage: config,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
-  },
-  fileFilter: fileFilter,
-});
-
-module.exports = function (router) {
-  router.get("/edit/:blogId", user.editBlog);
-  router.get("/newBlog", text.newBlog);
-  router.get("/about", text.newBlog);
-
-  router.get("/editAbout", user.editAbout);
-  router.get("/hakkimizda", user.renderAbout);
-
-  //var cpUpload = upload.fields([{ name: "photo", maxCount: 1 }]);
-  router.post(
-    "/entry",
-    upload.single("photo"),
-    blogEdit,
-    user.imagePlacementForBlog
-  );
-  router.post("/about", upload.single("photo"), blogEdit, user.imagePlacement);
-  router.post("/blogText", user.saveBlogText);
-  router.post("/text", user.saveWebSiteInfoText);
-  router.post("/deleteImage", text.deleteImage);
-  router.post("/deleteImageForBlog", text.deleteImageForBlog);
-  //router.post("/blogEdit", cpUpload, blogEdit, text.update);
-  //router.get("/about", cpUpload, blogEdit, text.save);
-};
-*/
-
 module.exports = function (router) {
   var express = require("express");
   const passport = require("passport");
@@ -71,6 +7,8 @@ module.exports = function (router) {
 
   const JWTStrategy = passportJWT.Strategy;
   const parseForm = express.urlencoded({ extended: false });
+  var csrf = require("csurf");
+  var csrfProtection = csrf({ cookie: true });
 
   const user = {
     id: "1",
@@ -135,11 +73,6 @@ module.exports = function (router) {
       });
     })(req, res, next);
   });
-
-  var ensureAuthenticated = function (req, res, next) {
-    if (req.isAuthenticated()) return next();
-    else res.redirect("/login");
-  };
 
   /* GET users listing. */
   router.get("/", function (req, res, next) {
