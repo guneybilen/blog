@@ -129,42 +129,40 @@ module.exports = function (router) {
   });
 
   router.get("/blogs/:id", parseForm, csrfProtection, (req, res) => {
-    //console.log("text");
+    console.log(req.params.id);
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
-    //console.log(result);
-    return res.send([result.blogs[req.params.id]]);
+    // console.log([result.blogs[req.params.id]]);
+    return res.send([result.blogs[req.params.id - 1]]);
   });
 
   router.post("/blogs", (req, res) => {
+    console.log(req.body);
     fs.readFile("data/db.json", function (err, data) {
-      // console.log(data);
       var json = JSON.parse(data);
       let result = JSON.parse(req.body.body);
-      //console.log("result", result);
+      //console.log(json["blogs"].length);
 
-      console.log(json["blogs"].length);
       const retrieveValue = (key) =>
         json["blogs"].filter((x) => x[key]).map((x) => x[key])[3];
-      console.log("retrieveValue", retrieveValue("id"));
+      //console.log("retrieveValue", retrieveValue("id"));
       let value = retrieveValue("id");
 
+      // console.log(value);
       let newData = {
         title: result.title,
         body: result.body,
         author: result.author,
         id: value + 1,
       };
-      // return;
-      console.log(newData);
+      // console.log(newData);
       json["blogs"].push(newData);
-      // console.log(json);
       let dt = JSON.stringify(json);
-      // console.log(json);
-      //return;
+      console.log(dt);
+
       fs.writeFileSync("data/db.json", dt);
     });
 
-    //return res.json("ok");
+    return res.json("ok");
   });
 };
