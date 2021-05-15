@@ -135,6 +135,32 @@ module.exports = function (router) {
     // console.log([result.blogs[req.params.id]]);
     return res.send([result.blogs[req.params.id - 1]]);
   });
+  router.get("/blogs/:id/edit", parseForm, csrfProtection, (req, res) => {
+    // console.log(req.params.id);
+    let rawdata = fs.readFileSync("data/db.json");
+    let result = JSON.parse(rawdata);
+    // console.log([result.blogs[req.params.id]]);
+    return res.send([result.blogs[req.params.id - 1]]);
+  });
+
+  router.delete("/blogs/:id", (req, res) => {
+    // console.log("req.params.id ", req.params.id);
+    fs.readFile("data/db.json", function (err, data) {
+      var json = JSON.parse(data);
+
+      let newJSON = json["blogs"].filter(
+        (blog) => blog.id !== parseInt(req.params.id)
+      );
+
+      let obj = {
+        blogs: newJSON,
+      };
+
+      fs.writeFileSync("data/db.json", JSON.stringify(obj));
+    });
+
+    return res.json("ok");
+  });
 
   router.post("/blogs", (req, res) => {
     console.log(req.body);
@@ -161,6 +187,43 @@ module.exports = function (router) {
       console.log(dt);
 
       fs.writeFileSync("data/db.json", dt);
+    });
+
+    return res.json("ok");
+  });
+
+  router.patch("/blogs/:id/edit", (req, res) => {
+    console.log(req.body);
+    fs.readFile("data/db.json", function (err, data) {
+      var json = JSON.parse(data);
+
+      // let result = JSON.parse(req.body.body);
+
+      // const retrieveValue = (key) =>
+      //   json["blogs"].filter((x) => x[key]).map((x) => x[key])[3];
+
+      // let value = retrieveValue("id");
+
+      let newJSON = json["blogs"].filter(
+        (blog) => blog.id !== parseInt(req.params.id)
+      );
+
+      let obj = {
+        blogs: newJSON,
+      };
+
+      let newData = {
+        title: req.body.title,
+        body: req.body.body,
+        author: req.body.author,
+        id: parseInt(req.params.id),
+      };
+
+      obj["blogs"].push(newData);
+      // let dt = JSON.stringify(json);
+      // console.log(dt);
+
+      fs.writeFileSync("data/db.json", JSON.stringify(obj));
     });
 
     return res.json("ok");
