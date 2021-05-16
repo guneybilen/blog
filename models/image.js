@@ -1,11 +1,16 @@
-// const mongoose = require("@app/mongoose");
 const mongoose = require("../mongoose");
 
 const { Schema } = mongoose;
+const Blog = require("./blog").schema;
 
 const imageSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
+    blogID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      required: true,
+    },
     fieldname: String,
     originalname: String,
     encoding: String,
@@ -14,6 +19,8 @@ const imageSchema = new Schema(
     filename: String,
     path: String,
     size: Number,
+    data: Schema.Types.Mixed,
+    contentType: String,
   },
   { timestamps: true }
 );

@@ -1,10 +1,10 @@
 var express = require("express");
-// var app = express();
-// app.use(express.urlencoded({ extended: false }));
-// app.use(express.json());
-var csrf = require("csurf");
-var csrfProtection = csrf({ cookie: true });
-var parseForm = express.urlencoded({ extended: false });
+var app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+//var csrf = require("csurf");
+//var csrfProtection = csrf({ cookie: true });
+//var parseForm = express.urlencoded({ extended: false });
 
 const { authMiddleware: middleware } = require("../middleware");
 const {
@@ -13,6 +13,8 @@ const {
   userController: user,
 } = require("../controllers");
 const UserModel = require("../models/user");
+const BlogModel = require("../models/blog");
+const ImageModel = require("../models/image");
 const multer = require("multer");
 const sharp = require("sharp");
 const fs = require("fs");
@@ -21,29 +23,48 @@ let dir = "/multer/uploads/images";
 var mongoose = require("mongoose");
 const { db } = require("../models/user");
 
-var config = multer.memoryStorage({
-  filename: function (req, file = {}, cb) {
-    // cb(null, new Date().toISOString() + file.originalname);
-    // console.log("req.originalname ", req.originalname);
-    cb(null, file.originalname);
-  },
-});
+// var storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads");
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.fieldname + "-" + Date.now());
+//   },
+// });
 
-const fileFilter = (req, file, cb) => {
-  if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-    cb(new Error("Please upload an image."));
-  } else {
-    cb(undefined, true);
-  }
-};
+// var store = multer({
+//   storage: storage,
+//   limits: {
+//     fileSize: 1024 * 1024 * 5,
+//   },
+// });
 
-const upload = multer({
-  storage: config,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
-  },
-  fileFilter: fileFilter,
-});
+var storage = multer.memoryStorage();
+var store = multer({ storage: storage });
+
+// var config = multer.memoryStorage({
+//   filename: function (req, file = {}, cb) {
+//     // cb(null, new Date().toISOString() + file.originalname);
+//     // console.log("req.originalname ", req.originalname);
+//     cb(null, file.originalname);
+//   },
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
+//     cb(new Error("Please upload an image."));
+//   } else {
+//     cb(undefined, true);
+//   }
+// };
+
+// const upload = multer({
+//   storage: store,
+//   limits: {
+//     fileSize: 1024 * 1024 * 5,
+//   },
+//   // fileFilter: fileFilter,
+// });
 
 module.exports = function (router) {
   router.post("/recordPost");
@@ -114,37 +135,32 @@ module.exports = function (router) {
 
   router.get("/contact", text.contact);
 
-  router.get("/form", csrfProtection, function (req, res) {
-    // res.header("Access-Control-Allow-Origin", "*");
+  // router.get("/form", csrfProtection, function (req, res) {
+  //   // res.header("Access-Control-Allow-Origin", "*");
 
-    res.send({ csrfToken: req.csrfToken() });
-  });
+  //   res.send({ csrfToken: req.csrfToken() });
+  // });
 
-  router.get("/blogs", parseForm, csrfProtection, (req, res) => {
-    //console.log("text");
+  router.get("/blogs", (req, res) => {
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
-    //console.log(result);
     return res.send([result.blogs]);
   });
 
-  router.get("/blogs/:id", parseForm, csrfProtection, (req, res) => {
+  router.get("/blogs/:id", (req, res) => {
     console.log(req.params.id);
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
-    // console.log([result.blogs[req.params.id]]);
     return res.send([result.blogs[req.params.id - 1]]);
   });
-  router.get("/blogs/:id/edit", parseForm, csrfProtection, (req, res) => {
-    // console.log(req.params.id);
+
+  router.get("/blogs/:id/edit", (req, res) => {
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
-    // console.log([result.blogs[req.params.id]]);
     return res.send([result.blogs[req.params.id - 1]]);
   });
 
   router.delete("/blogs/:id", (req, res) => {
-    // console.log("req.params.id ", req.params.id);
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
 
@@ -162,26 +178,69 @@ module.exports = function (router) {
     return res.json("ok");
   });
 
-  router.post("/blogs", (req, res) => {
-    console.log(req.body);
+  var cpUpload = store.fields([{ name: "files", maxCount: 4 }]);
+  router.post("/blogs", store.array("files", 4), async (req, res) => {
+    // console.log(req.files);
+
+    let user = await UserModel.findOne({
+      email: "basakbilen2000@yahoo.com",
+    }).exec();
+
+    let newBlog = new BlogModel({
+      _id: mongoose.Types.ObjectId(),
+      userId: user._id,
+      title: req.body.title,
+      body: req.body.body,
+      author: req.body.author,
+    });
+
+    let savedBlog = await newBlog.save();
+
+    for (file of req.files) {
+      let image = new ImageModel({
+        _id: mongoose.Types.ObjectId(),
+        blogID: savedBlog._id,
+        fieldname: file["fieldname"],
+        originalname: file["originalname"],
+        encoding: file["encoding"],
+        mimetype: file["mimetype"],
+        destination: null,
+        filename: null,
+        path: null,
+      });
+      sharp(file["buffer"])
+        .rotate()
+        .resize(200)
+        .jpeg({ mozjpeg: true })
+        .toBuffer()
+        .then((data) => {
+          image.data = data;
+          image.save();
+          //console.log("image compressed and saved to MongoDB");
+        })
+        .catch((err) => console.log(err));
+    }
+
+    //console.log(savedBlog);
+
+    return res.json("ok");
+
+    /*
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
       let result = JSON.parse(req.body.body);
-      //console.log(json["blogs"].length);
 
       const retrieveValue = (key) =>
         json["blogs"].filter((x) => x[key]).map((x) => x[key])[3];
-      //console.log("retrieveValue", retrieveValue("id"));
       let value = retrieveValue("id");
 
-      // console.log(value);
       let newData = {
         title: result.title,
         body: result.body,
         author: result.author,
         id: value + 1,
       };
-      // console.log(newData);
+
       json["blogs"].push(newData);
       let dt = JSON.stringify(json);
       console.log(dt);
@@ -190,19 +249,13 @@ module.exports = function (router) {
     });
 
     return res.json("ok");
+    */
   });
 
   router.patch("/blogs/:id/edit", (req, res) => {
     console.log(req.body);
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
-
-      // let result = JSON.parse(req.body.body);
-
-      // const retrieveValue = (key) =>
-      //   json["blogs"].filter((x) => x[key]).map((x) => x[key])[3];
-
-      // let value = retrieveValue("id");
 
       let newJSON = json["blogs"].filter(
         (blog) => blog.id !== parseInt(req.params.id)
@@ -220,8 +273,6 @@ module.exports = function (router) {
       };
 
       obj["blogs"].push(newData);
-      // let dt = JSON.stringify(json);
-      // console.log(dt);
 
       fs.writeFileSync("data/db.json", JSON.stringify(obj));
     });

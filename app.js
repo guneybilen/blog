@@ -10,6 +10,7 @@ const { StatusCodes: HttpStatus } = require("http-status-codes");
 const hidePoweredBy = require("hide-powered-by");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 
 // var csrf = require("csurf");
 require("dotenv").config();
@@ -18,22 +19,18 @@ require("dotenv").config();
 // const router = require("./routes");
 
 var app = express();
+
 app.use(helmet());
 app.use(cookieParser());
-// app.use(
-//   cors({
-//     origin: "http://localhost:3000",
-//     optionsSuccessStatus: HttpStatus.OK,
-//     credentials: true,
-//   })
-// );
-
-app.use(cors());
-
-app.use(express.json());
 app.use(
-  express.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 })
+  cors({
+    origin: "http://localhost:3000",
+    optionsSuccessStatus: HttpStatus.OK,
+    credentials: true,
+  })
 );
+
+//app.use(cors());
 
 app.use(passport.initialize());
 
@@ -56,7 +53,10 @@ app.use(hidePoweredBy({ setTo: "PHP 5.2.0" }));
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
-
+// app.use(
+//   express.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 })
+// );
+// app.use(express.json());
 app.use(logger("dev"));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
