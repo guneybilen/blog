@@ -10,7 +10,7 @@ const { StatusCodes: HttpStatus } = require("http-status-codes");
 const hidePoweredBy = require("hide-powered-by");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
+// const bodyParser = require("body-parser");
 
 // var csrf = require("csurf");
 require("dotenv").config();
@@ -19,6 +19,8 @@ require("dotenv").config();
 // const router = require("./routes");
 
 var app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(helmet());
 app.use(cookieParser());
@@ -32,6 +34,7 @@ app.use(
 
 //app.use(cors());
 
+require("./authentication/pass_local_auth")(passport);
 app.use(passport.initialize());
 
 // app.use(

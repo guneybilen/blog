@@ -1,8 +1,9 @@
+var mongoose = require("mongoose");
+var moment = require("moment");
+const jwt = require("jsonwebtoken");
 const { cookieMiddleware } = require("../middleWare/");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
-var mongoose = require("mongoose");
-var moment = require("moment");
 moment().format();
 
 const userController = {
@@ -192,6 +193,53 @@ const userController = {
       user: user.userName === "basak" ? "basak" : false,
       images: user["siteImages"].reverse(),
     });
+  },
+
+  ////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  // AFTER REACT.JS
+  //
+  //
+  ////////////////////////////////////////////////////////////////////////////////
+
+  sign_in: async (req, res, next) => {
+    let user = await UserModel.findOne({ email: req.body.email }).exec();
+
+    // console.log("user ", user);
+    // .then((user) => {
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "could not find user" });
+    }
+
+    // Function defined at bottom of app.js
+    let isValid = user.comparePassword(req.body.password);
+
+    const expiresIn = "1d";
+
+    if (isValid) {
+      const payload = {
+        sub: user._id,
+        iat: Date.now(),
+      };
+      // console.log(process.env.SECRETORKEY);
+      const token = jwt.sign(payload, process.env.SECRETORKEY, {
+        expiresIn: expiresIn,
+      });
+
+      res.status(200).json({
+        success: true,
+        token: "Bearer " + token,
+        expires: expiresIn,
+      });
+    } else {
+      res
+        .status(401)
+        .json({ success: false, msg: "you entered the wrong password" });
+    }
   },
 };
 

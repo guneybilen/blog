@@ -1,11 +1,17 @@
-var express = require("express");
-var app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// var express = require("express");
+// var app = express();
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
 //var csrf = require("csurf");
 //var csrfProtection = csrf({ cookie: true });
 //var parseForm = express.urlencoded({ extended: false });
-
+const multer = require("multer");
+const sharp = require("sharp");
+const fs = require("fs");
+const path = require("path");
+let dir = "/multer/uploads/images";
+var mongoose = require("mongoose");
+const passport = require("passport");
 const { authMiddleware: middleware } = require("../middleware");
 const {
   authController: auth,
@@ -15,13 +21,9 @@ const {
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const ImageModel = require("../models/image");
-const multer = require("multer");
-const sharp = require("sharp");
-const fs = require("fs");
-const path = require("path");
-let dir = "/multer/uploads/images";
-var mongoose = require("mongoose");
-const { db } = require("../models/user");
+
+// const { db } = require("../models/user");
+// require("../authentication/pass_local_auth")(passport);
 
 // var storage = multer.diskStorage({
 //   destination: (req, file, cb) => {
@@ -142,6 +144,7 @@ module.exports = function (router) {
   // });
 
   router.get("/blogs", (req, res) => {
+    // console.log("req ", req);
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
     return res.send([result.blogs]);
@@ -225,7 +228,7 @@ module.exports = function (router) {
 
     return res.json("ok");
 
-    /*
+    /* local file store data/db.json version
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
       let result = JSON.parse(req.body.body);
