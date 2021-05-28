@@ -241,6 +241,26 @@ const userController = {
         .json({ success: false, msg: "you entered the wrong password" });
     }
   },
+
+  sign_out: async (req, res, next) => {
+    // let user = await UserModel.findOne({ email: req.body.email }).exec();
+
+    // if (!user) {
+    //   return res
+    //     .status(401)
+    //     .json({ success: false, msg: "could not find user" });
+    // }
+
+    // let isValid = user.comparePassword(req.body.password);
+
+    // if (isValid)
+    req.logout();
+
+    res.status(200).json({
+      success: true,
+      happened: "logged_out",
+    });
+  },
 };
 
 module.exports = userController;

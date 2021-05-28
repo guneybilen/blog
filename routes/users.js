@@ -21,6 +21,7 @@ module.exports = function (router) {
   });
 
   router.post("/sign_in", UserController.sign_in);
+  router.get("/sign_out", UserController.sign_out);
 
   router.get("/protected", authorized, (req, res, next) => {
     res.status(200).json({
