@@ -10,10 +10,7 @@ const UserController = require("../controllers/userController");
 const authorized = require("../authentication/authorized");
 
 module.exports = function (router) {
-  router.get("/sign_out", (req, res, next) => {
-    req.logout();
-    res.json({ token: "" });
-  });
+  router.get("/sign_out", authorized, UserController.sign_out);
 
   /* GET users listing. */
   router.get("/", function (req, res, next) {
@@ -21,7 +18,6 @@ module.exports = function (router) {
   });
 
   router.post("/sign_in", UserController.sign_in);
-  router.get("/sign_out", UserController.sign_out);
 
   router.get("/protected", authorized, (req, res, next) => {
     res.status(200).json({

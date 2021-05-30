@@ -22,112 +22,11 @@ const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const ImageModel = require("../models/image");
 
-// const { db } = require("../models/user");
-// require("../authentication/pass_local_auth")(passport);
-
-// var storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, file.fieldname + "-" + Date.now());
-//   },
-// });
-
-// var store = multer({
-//   storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 5,
-//   },
-// });
-
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
 
-// var config = multer.memoryStorage({
-//   filename: function (req, file = {}, cb) {
-//     // cb(null, new Date().toISOString() + file.originalname);
-//     // console.log("req.originalname ", req.originalname);
-//     cb(null, file.originalname);
-//   },
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-//     cb(new Error("Please upload an image."));
-//   } else {
-//     cb(undefined, true);
-//   }
-// };
-
-// const upload = multer({
-//   storage: store,
-//   limits: {
-//     fileSize: 1024 * 1024 * 5,
-//   },
-//   // fileFilter: fileFilter,
-// });
-
 module.exports = function (router) {
   router.post("/recordPost");
-
-  /*
-  var cpUpload = upload.fields([{ name: "photos", maxCount: 4 }]);
-  router.post(
-    "/upload",
-    cpUpload,
-    async (req, res, next) => {
-      // NOTICE DUPLICATE CODE.
-      // The Following code is also present
-      // in the routes/blog.js for more caution.
-      if (!req.files.photos && req.body.data === "") {
-        // Normally code should not reach here.
-        // If the code is reaching here, they are
-        // trying to bypass the client side check.
-        return res.json({ error: "empty body" });
-      }
-
-      try {
-        var blogId = mongoose.Types.ObjectId();
-
-        if (!fs.existsSync(`${dir}/${res.locals.userName}/${blogId}`)) {
-          try {
-            fs.mkdirSync(`${dir}/${res.locals.userName}/${blogId}`, {
-              recursive: true,
-            });
-            console.log("Directory created successfully!");
-          } catch (e) {
-            console.log(e.message);
-          }
-        }
-        req.files.photos.forEach((element) => {
-          sharp(element.buffer)
-            .rotate()
-            .resize(640, 320)
-            .toFormat("jpeg")
-            .jpeg({ quality: 90 })
-            .toFile(
-              path.resolve(
-                `${dir}/${res.locals.userName}/${blogId}/${element["originalname"]}`
-              )
-            )
-            .then((info) => {
-              console.log(info);
-            })
-            .catch((err) => {
-              console.log(err.message);
-            });
-        });
-
-        req.blogId = blogId;
-
-        next();
-      } catch (e) {
-        res.status(400).send(e.message);
-      }
-    },
-    text.save
-  ); */
   router.get("/author/:kodName/all", text.readBlogsByMe);
   router.get("/author/:kodName/:page", text.readBlogsByMe);
   router.get("/getBlogs/:page", text.readBlogs);
@@ -143,24 +42,62 @@ module.exports = function (router) {
   //   res.send({ csrfToken: req.csrfToken() });
   // });
 
-  router.get("/blogs", (req, res) => {
+  router.get("/blogs", async (req, res) => {
     // console.log("req ", req);
+    // let blogs = await BlogModel.find({}).exec();
+    let str = req.path.split(/\//);
+    let index = str[2] ? str[2] : 1;
+    var options = {
+      // select: "title body author createdAt updatedAt",
+      sort: { date: -1 },
+      populate: "blogID",
+      lean: true,
+      offset: 0,
+      limit: 3,
+    };
+    let blogs = await ImageModel.paginate({}, options).catch((e) =>
+      console.log(e.message)
+    );
+
+    // console.log(blogs);
+    return res.send([blogs]);
+
+    ////////////////////////////////////////////
+    /* local file store data/db.json version
+    ////////////////////////////////////////////
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
     return res.send([result.blogs]);
+    */
   });
 
-  router.get("/blogs/:id", (req, res) => {
+  router.get("/blogs/:id", async (req, res) => {
     console.log(req.params.id);
+    let { id } = req.params;
+    let blog = await BlogModel.findById(id).exec();
+    return res.send([blog]);
+
+    ////////////////////////////////////////////
+    /* local file store data/db.json version
+    ////////////////////////////////////////////
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
     return res.send([result.blogs[req.params.id - 1]]);
+    */
   });
 
-  router.get("/blogs/:id/edit", (req, res) => {
+  router.get("/blogs/:id/edit", async (req, res) => {
+    let { id } = req.params;
+    let blog = await BlogModel.findById(id).exec();
+    return res.send([blog]);
+
+    ////////////////////////////////////////////
+    /* local file store data/db.json version
+    ////////////////////////////////////////////
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
     return res.send([result.blogs[req.params.id - 1]]);
+     */
   });
 
   router.delete("/blogs/:id", (req, res) => {
@@ -228,7 +165,9 @@ module.exports = function (router) {
 
     return res.json("ok");
 
+    ////////////////////////////////////////////
     /* local file store data/db.json version
+    ////////////////////////////////////////////
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
       let result = JSON.parse(req.body.body);

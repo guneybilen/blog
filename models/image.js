@@ -1,4 +1,5 @@
 const mongoose = require("../mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const { Schema } = mongoose;
 const Blog = require("./blog").schema;
@@ -24,6 +25,8 @@ const imageSchema = new Schema(
   },
   { timestamps: true }
 );
+
+imageSchema.plugin(mongoosePaginate);
 
 const Image = mongoose.model("Image", imageSchema);
 
