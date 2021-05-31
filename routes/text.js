@@ -21,6 +21,7 @@ const {
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const ImageModel = require("../models/image");
+const authorized = require("../authentication/authorized");
 
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
@@ -44,9 +45,9 @@ module.exports = function (router) {
 
   router.get("/blogs", async (req, res) => {
     // console.log("req ", req);
-    // let blogs = await BlogModel.find({}).exec();
-    let str = req.path.split(/\//);
-    let index = str[2] ? str[2] : 1;
+    let blogs = await BlogModel.find({}).exec();
+    // let str = req.path.split(/\//);
+    // let index = str[2] ? str[2] : 1;
     var options = {
       // select: "title body author createdAt updatedAt",
       sort: { date: -1 },
@@ -55,12 +56,17 @@ module.exports = function (router) {
       offset: 0,
       limit: 3,
     };
-    let blogs = await ImageModel.paginate({}, options).catch((e) =>
+    let images = await ImageModel.paginate({}).catch((e) =>
       console.log(e.message)
     );
 
     // console.log(blogs);
-    return res.send([blogs]);
+    let data = {
+      blogs,
+      images,
+    };
+    // console.log(JSON.stringify(data));
+    return res.status(200).json([data]);
 
     ////////////////////////////////////////////
     /* local file store data/db.json version
@@ -71,11 +77,26 @@ module.exports = function (router) {
     */
   });
 
-  router.get("/blogs/:id", async (req, res) => {
-    console.log(req.params.id);
+  router.get("/blogs/:id", authorized, async (req, res) => {
+    // console.log(req.params.id);
     let { id } = req.params;
     let blog = await BlogModel.findById(id).exec();
-    return res.send([blog]);
+    let images = await ImageModel.find({ blogID: blog._id }).exec();
+
+    // console.log("req.userId.toString() ", req.userId.toString());
+    // console.log("blog.userId.toString() ", blog.userId.toString());
+    let sameUser = req.userId.toString() === blog.userId.toString();
+    if (req.userId.toString() === blog.userId.toString()) {
+      console.log("user passed authorization test");
+      return;
+    }
+
+    let data = {
+      blog,
+      images,
+      sameUser,
+    };
+    return res.status(200).json([data]);
 
     ////////////////////////////////////////////
     /* local file store data/db.json version
@@ -194,8 +215,20 @@ module.exports = function (router) {
     */
   });
 
-  router.patch("/blogs/:id/edit", (req, res) => {
-    console.log(req.body);
+  router.patch("/blogs/:id/edit", authorized, async (req, res) => {
+    console.log("req.body ", req.body);
+    let { id } = req.params;
+    let blog = await BlogModel.findById(id).exec();
+    console.log("req.userId.toString() ", req.userId.toString());
+    console.log("blog.userId.toString() ", blog.userId.toString());
+    if (req.userId.toString() === blog.userId.toString()) {
+      console.log("user passed authorization test");
+      return;
+    }
+    return res.status(201).json([blog]);
+    ////////////////////////////////////////////
+    /* local file store data/db.json version
+    ////////////////////////////////////////////
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
 
@@ -220,5 +253,6 @@ module.exports = function (router) {
     });
 
     return res.json("ok");
+    */ ////////////////////////////////////////////////////////////
   });
 };
