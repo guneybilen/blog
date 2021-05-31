@@ -48,15 +48,16 @@ module.exports = function (router) {
     let blogs = await BlogModel.find({}).exec();
     // let str = req.path.split(/\//);
     // let index = str[2] ? str[2] : 1;
-    var options = {
-      // select: "title body author createdAt updatedAt",
-      sort: { date: -1 },
-      populate: "blogID",
-      lean: true,
-      offset: 0,
-      limit: 3,
-    };
-    let images = await ImageModel.paginate({}).catch((e) =>
+    // var options = {
+    //   // select: "title body author createdAt updatedAt",
+    //   sort: { date: -1 },
+    //   populate: "blogID",
+    //   lean: true,
+    //   offset: 0,
+    //   limit: 30,
+    // };
+
+    let images = await ImageModel.paginate({}, { limit: 40 }).catch((e) =>
       console.log(e.message)
     );
 
@@ -140,54 +141,56 @@ module.exports = function (router) {
   });
 
   var cpUpload = store.fields([{ name: "files", maxCount: 4 }]);
-  router.post("/blogs", store.array("files", 4), async (req, res) => {
-    // console.log(req.files);
+  router.post(
+    "/blogs",
+    authorized,
+    store.array("files", 4),
+    async (req, res) => {
+      // console.log(req.files);
 
-    let user = await UserModel.findOne({
-      email: "basakbilen2000@yahoo.com",
-    }).exec();
+      let user = await UserModel.findById(req.userId).exec();
 
-    let newBlog = new BlogModel({
-      _id: mongoose.Types.ObjectId(),
-      userId: user._id,
-      title: req.body.title,
-      body: req.body.body,
-      author: req.body.author,
-    });
-
-    let savedBlog = await newBlog.save();
-
-    for (file of req.files) {
-      let image = new ImageModel({
+      let newBlog = new BlogModel({
         _id: mongoose.Types.ObjectId(),
-        blogID: savedBlog._id,
-        fieldname: file["fieldname"],
-        originalname: file["originalname"],
-        encoding: file["encoding"],
-        mimetype: file["mimetype"],
-        destination: null,
-        filename: null,
-        path: null,
+        userId: user._id,
+        title: req.body.title,
+        body: req.body.body,
+        // author: req.body.author,
       });
-      sharp(file["buffer"])
-        .rotate()
-        .resize(200)
-        .jpeg({ mozjpeg: true })
-        .toBuffer()
-        .then((data) => {
-          image.data = data;
-          image.save();
-          //console.log("image compressed and saved to MongoDB");
-        })
-        .catch((err) => console.log(err));
-    }
 
-    //console.log(savedBlog);
+      let savedBlog = await newBlog.save();
 
-    return res.json("ok");
+      for (file of req.files) {
+        let image = new ImageModel({
+          _id: mongoose.Types.ObjectId(),
+          blogID: savedBlog._id,
+          fieldname: file["fieldname"],
+          originalname: file["originalname"],
+          encoding: file["encoding"],
+          mimetype: file["mimetype"],
+          destination: null,
+          filename: null,
+          path: null,
+        });
+        sharp(file["buffer"])
+          .rotate()
+          .resize(200)
+          .jpeg({ mozjpeg: true })
+          .toBuffer()
+          .then((data) => {
+            image.data = data;
+            image.save();
+            //console.log("image compressed and saved to MongoDB");
+          })
+          .catch((err) => console.log(err));
+      }
 
-    ////////////////////////////////////////////
-    /* local file store data/db.json version
+      //console.log(savedBlog);
+
+      return res.json("ok");
+
+      ////////////////////////////////////////////
+      /* local file store data/db.json version
     ////////////////////////////////////////////
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
@@ -213,7 +216,8 @@ module.exports = function (router) {
 
     return res.json("ok");
     */
-  });
+    }
+  );
 
   router.patch("/blogs/:id/edit", authorized, async (req, res) => {
     console.log("req.body ", req.body);
