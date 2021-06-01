@@ -81,13 +81,14 @@ module.exports = function (router) {
   router.get("/blogs/:id", authorized, async (req, res) => {
     // console.log(req.params.id);
     let { id } = req.params;
-    let blog = await BlogModel.findById(id).exec();
+    let blog = await BlogModel.findById(id).populate("userId").exec();
     let images = await ImageModel.find({ blogID: blog._id }).exec();
 
+    // console.log(blog);
     // console.log("req.userId.toString() ", req.userId.toString());
     // console.log("blog.userId.toString() ", blog.userId.toString());
-    let sameUser = req.userId.toString() === blog.userId.toString();
-    if (req.userId.toString() === blog.userId.toString()) {
+    let sameUser = req.userId.toString() === blog.userId._id.toString();
+    if (sameUser) {
       console.log("user passed authorization test");
     } else {
       console.log("user failed authorization test");
@@ -227,7 +228,7 @@ module.exports = function (router) {
     authorized,
     store.array("files", 4),
     async (req, res) => {
-      console.log(req);
+      // console.log(req);
       let { id } = req.params;
       let { body } = req.body;
       let { title } = req.body;
