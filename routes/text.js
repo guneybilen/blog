@@ -89,7 +89,8 @@ module.exports = function (router) {
     let sameUser = req.userId.toString() === blog.userId.toString();
     if (req.userId.toString() === blog.userId.toString()) {
       console.log("user passed authorization test");
-      return;
+    } else {
+      console.log("user failed authorization test");
     }
 
     let data = {
@@ -108,19 +109,20 @@ module.exports = function (router) {
     */
   });
 
-  router.get("/blogs/:id/edit", async (req, res) => {
-    let { id } = req.params;
-    let blog = await BlogModel.findById(id).exec();
-    return res.send([blog]);
+  // router.get("/blogs/:id/edit", authorized, async (req, res) => {
+  //   console.log("!!!!!!!!!!!!!!!!!!!!!!!");
+  //   let { id } = req.params;
+  //   let blog = await BlogModel.findById(id).exec();
+  //   return res.send([blog]);
 
-    ////////////////////////////////////////////
-    /* local file store data/db.json version
+  ////////////////////////////////////////////
+  /* local file store data/db.json version
     ////////////////////////////////////////////
     let rawdata = fs.readFileSync("data/db.json");
     let result = JSON.parse(rawdata);
     return res.send([result.blogs[req.params.id - 1]]);
      */
-  });
+  // });
 
   router.delete("/blogs/:id", (req, res) => {
     fs.readFile("data/db.json", function (err, data) {
@@ -219,19 +221,80 @@ module.exports = function (router) {
     }
   );
 
-  router.patch("/blogs/:id/edit", authorized, async (req, res) => {
-    console.log("req.body ", req.body);
-    let { id } = req.params;
-    let blog = await BlogModel.findById(id).exec();
-    console.log("req.userId.toString() ", req.userId.toString());
-    console.log("blog.userId.toString() ", blog.userId.toString());
-    if (req.userId.toString() === blog.userId.toString()) {
-      console.log("user passed authorization test");
-      return;
+  var cpUpload = store.fields([{ name: "files", maxCount: 4 }]);
+  router.put(
+    "/blogs/:id/edit",
+    authorized,
+    store.array("files", 4),
+    async (req, res) => {
+      console.log(req);
+      let { id } = req.params;
+      let { body } = req.body;
+      let { title } = req.body;
+
+      let user = await UserModel.findById(req.userId).exec();
+      let blog = await BlogModel.findById(id).exec();
+
+      if (req.userId.toString() === blog.userId.toString()) {
+        console.log("user passed authorization test");
+      } else {
+        console.log("user failed authorization test");
+      }
+
+      BlogModel.findById(id, function (err, blog) {
+        if (err) {
+          console.log(err);
+          return res.status(400).json({ success: false });
+        }
+        blog.body = body;
+        blog.title = title;
+        blog.save();
+      });
+
+      for (file of req.files) {
+        let image = new ImageModel({
+          _id: mongoose.Types.ObjectId(),
+          blogID: id,
+          fieldname: file["fieldname"],
+          originalname: file["originalname"],
+          encoding: file["encoding"],
+          mimetype: file["mimetype"],
+          destination: null,
+          filename: null,
+          path: null,
+        });
+        sharp(file["buffer"])
+          .rotate()
+          .resize(200)
+          .jpeg({ mozjpeg: true })
+          .toBuffer()
+          .then((data) => {
+            image.data = data;
+            image.save();
+            //console.log("image compressed and saved to MongoDB");
+          })
+          .catch((err) => console.log(err));
+      }
+
+      //console.log(savedBlog);
+
+      return res.json("ok");
     }
-    return res.status(201).json([blog]);
-    ////////////////////////////////////////////
-    /* local file store data/db.json version
+  );
+
+  // router.patch("/blogs/:id/edit", authorized, async (req, res) => {
+  //   console.log("req.body ", req.body);
+  //   let { id } = req.params;
+  //   let blog = await BlogModel.findById(id).exec();
+  //   console.log("req.userId.toString() ", req.userId.toString());
+  //   console.log("blog.userId.toString() ", blog.userId.toString());
+  //   if (req.userId.toString() === blog.userId.toString()) {
+  //     console.log("user passed authorization test");
+  //     return;
+  //   }
+  //   return res.status(201).json([blog]);
+  ////////////////////////////////////////////
+  /* local file store data/db.json version
     ////////////////////////////////////////////
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
@@ -258,5 +321,5 @@ module.exports = function (router) {
 
     return res.json("ok");
     */ ////////////////////////////////////////////////////////////
-  });
+  // });
 };
