@@ -243,6 +243,63 @@ const userController = {
         .json({ success: false, msg: "you entered the wrong password" });
     }
   },
+
+  sign_up: async (req, res, next) => {
+    let { email } = req.body;
+    let { password } = req.body;
+    let { passwordConfirm } = req.body;
+    let { userName } = req.body;
+
+    console.log(req.body);
+    if (userName.length < 3) {
+      return res.status(400).send();
+    }
+
+    if (password !== passwordConfirm) {
+      return res.status(403).send();
+    }
+
+    let user = await UserModel.findOne({ email }).exec();
+
+    if (user) {
+      return res.status(409).send();
+    }
+
+    try {
+      let userCreated = new UserModel({
+        _id: mongoose.Types.ObjectId(),
+        email: email,
+        password: password,
+        userName: userName,
+      });
+
+      userCreated.save(function (error) {
+        if (error) return console.log(error);
+        else console.log("registraion of the user is successfull");
+      });
+      const expiresIn = "1d";
+
+      const payload = {
+        sub: userCreated._id,
+        iat: Date.now(),
+      };
+      // console.log(process.env.SECRETORKEY);
+      const token = jwt.sign(payload, process.env.SECRETORKEY, {
+        expiresIn: expiresIn,
+      });
+
+      return res.status(200).json({
+        success: true,
+        token: "Bearer " + token,
+        expires: expiresIn,
+        userName: userCreated.userName,
+      });
+    } catch (error) {
+      console.log(error.message);
+      return res.status(500).send();
+    }
+  },
+
   sign_out: (req, res, next) => {
     console.log("signing out - message from userController, sign_out method");
     req.logout();
