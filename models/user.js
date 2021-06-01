@@ -19,10 +19,7 @@ const userSchema = new Schema(
     firstName: String,
     lastName: String,
     locale: String,
-    refreshToken: String,
     userName: { type: String, lowercase: true, trim: true },
-    ourStory: String,
-    siteImages: [Image],
     account: {
       verification: {
         verified: {
@@ -64,10 +61,10 @@ userSchema.methods.toJSON = function () {
   //
   //
   //
-
+  delete obj.account;
   delete obj.resetPassword;
-  delete obj.account.verification.token;
-  delete obj.account.verification.expiresIn;
+  // delete obj.account.verification.token;
+  // delete obj.account.verification.expiresIn;
 
   return obj;
 };

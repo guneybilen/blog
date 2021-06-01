@@ -45,7 +45,7 @@ module.exports = function (router) {
 
   router.get("/blogs", async (req, res) => {
     // console.log("req ", req);
-    let blogs = await BlogModel.find({}).exec();
+    let blogs = await BlogModel.find({}).populate("userId").exec();
     // let str = req.path.split(/\//);
     // let index = str[2] ? str[2] : 1;
     // var options = {

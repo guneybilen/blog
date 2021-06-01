@@ -7,6 +7,7 @@ function authorized(request, response, next) {
     }
     if (user._id) {
       request.userId = user._id;
+      request.userName = user.userName;
       next();
     } else {
       console.log(error.message);

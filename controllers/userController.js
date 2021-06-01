@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { cookieMiddleware } = require("../middleWare/");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
+const { user } = require("./authController");
 moment().format();
 
 const userController = {
@@ -234,6 +235,7 @@ const userController = {
         success: true,
         token: "Bearer " + token,
         expires: expiresIn,
+        userName: user.userName,
       });
     } else {
       res
@@ -244,7 +246,11 @@ const userController = {
   sign_out: (req, res, next) => {
     console.log("signing out - message from userController, sign_out method");
     req.logout();
-    res.json({ token: "", success: true, loggedOut: true });
+    res.json({
+      token: "",
+      success: true,
+      loggedOut: true,
+    });
   },
 };
 

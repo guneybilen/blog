@@ -22,6 +22,7 @@ module.exports = function (router) {
   router.get("/protected", authorized, (req, res, next) => {
     res.status(200).json({
       success: true,
+      userName: req.userName,
     });
   });
 };
