@@ -252,17 +252,23 @@ const userController = {
 
     console.log(req.body);
     if (userName.length < 3) {
-      return res.status(400).send();
+      return res.status(411).send();
     }
 
     if (password !== passwordConfirm) {
       return res.status(403).send();
     }
 
-    let user = await UserModel.findOne({ email }).exec();
+    let userForEmail = await UserModel.findOne({ email }).exec();
 
-    if (user) {
+    if (userForEmail) {
       return res.status(409).send();
+    }
+
+    let userForUserName = await UserModel.findOne({ userName }).exec();
+
+    if (userForUserName) {
+      return res.status(400).send();
     }
 
     try {
