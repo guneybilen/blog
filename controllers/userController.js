@@ -1,6 +1,7 @@
 var mongoose = require("mongoose");
 var moment = require("moment");
 const jwt = require("jsonwebtoken");
+var validator = require("validator");
 const { cookieMiddleware } = require("../middleWare/");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
@@ -250,8 +251,11 @@ const userController = {
     let { passwordConfirm } = req.body;
     let { userName } = req.body;
 
-    console.log(req.body);
-    if (userName.length < 3) {
+    // console.log(req.body);
+    if (!validator.isEmail(email)) {
+      return res.status(411).send();
+    }
+    if (userName.length < 3 || userName.length > 20) {
       return res.status(411).send();
     }
 

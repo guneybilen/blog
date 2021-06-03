@@ -178,7 +178,13 @@ module.exports = function (router) {
     authorized,
     store.array("files", 4),
     async (req, res) => {
-      // console.log(req.files);
+      let { body } = req.body;
+      let { title } = req.body;
+      if (title.length < 1 || title.length > 100)
+        return res.json({ title_too_short_or_long: true });
+
+      if (body.length < 1 || body.length > 10000)
+        return res.json({ body_too_short_or_long: true });
 
       if (req.files.length > 4)
         return res.json({ too_many_pictures_at_once: true });
@@ -188,8 +194,8 @@ module.exports = function (router) {
       let newBlog = new BlogModel({
         _id: mongoose.Types.ObjectId(),
         userId: user._id,
-        title: req.body.title,
-        body: req.body.body,
+        title: title,
+        body: body,
         // author: req.body.author,
       });
 
@@ -264,6 +270,12 @@ module.exports = function (router) {
       let { id } = req.params;
       let { body } = req.body;
       let { title } = req.body;
+
+      if (title.length < 1 || title.length > 100)
+        return res.json({ title_too_short_or_long: true });
+
+      if (body.length < 1 || body.length > 10000)
+        return res.json({ body_too_short_or_long: true });
 
       let user = await UserModel.findById(req.userId).exec();
       let blog = await BlogModel.findById(id).exec();

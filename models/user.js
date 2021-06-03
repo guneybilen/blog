@@ -14,12 +14,17 @@ const Blog = require("./blog").schema;
 const userSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    email: String,
-    password: String,
+    email: { type: String, minLength: 3, maxLength: 50, lowercase: true },
+    password: { type: String, minLength: 3, maxLength: 20, lowercase: true },
     firstName: String,
     lastName: String,
     locale: String,
-    userName: { type: String, lowercase: true, trim: true },
+    userName: {
+      type: String,
+      trim: true,
+      minLength: 3,
+      maxLength: 20,
+    },
     account: {
       verification: {
         verified: {
