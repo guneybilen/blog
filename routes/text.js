@@ -45,19 +45,22 @@ module.exports = function (router) {
 
   router.get("/blogs", async (req, res) => {
     // console.log("req ", req);
-    let blogs = await BlogModel.find({}).populate("userId").exec();
+    let blogs = await BlogModel.find({})
+      .sort([["updatedAt", -1]])
+      .populate("userId")
+      .exec();
     // let str = req.path.split(/\//);
     // let index = str[2] ? str[2] : 1;
-    // var options = {
-    //   // select: "title body author createdAt updatedAt",
-    //   sort: { date: -1 },
-    //   populate: "blogID",
-    //   lean: true,
-    //   offset: 0,
-    //   limit: 30,
-    // };
+    var options = {
+      //   // select: "title body author createdAt updatedAt",
+      sort: { date: -1 },
+      //   populate: "blogID",
+      //   lean: true,
+      //   offset: 0,
+      limit: 40,
+    };
 
-    let images = await ImageModel.paginate({}, { limit: 40 }).catch((e) =>
+    let images = await ImageModel.paginate({}, options).catch((e) =>
       console.log(e.message)
     );
 
@@ -125,7 +128,33 @@ module.exports = function (router) {
      */
   // });
 
-  router.delete("/blogs/:id", (req, res) => {
+  router.delete("/blogs/:id", authorized, async (req, res) => {
+    let { id } = req.params;
+    ImageModel.findOneAndRemove({ blogID: id }, function (err, image) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        console.log("Removed image : ", image);
+      }
+    });
+    BlogModel.findByIdAndRemove(id, function (err, blog) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        console.log("Removed Blog : ", blog);
+      }
+    });
+
+    res.status(204).send();
+  });
+  //await BlogModel.findByIdAndRemove(id).exec();
+  // res.json(204).send();
+  // } catch (error) {
+  // console.log(error.message);
+  // }
+  ////////////////////////////////////////////
+  /* local file store data/db.json version
+    ////////////////////////////////////////////
     fs.readFile("data/db.json", function (err, data) {
       var json = JSON.parse(data);
 
@@ -137,11 +166,11 @@ module.exports = function (router) {
         blogs: newJSON,
       };
 
-      fs.writeFileSync("data/db.json", JSON.stringify(obj));
-    });
+      fs.writeFileSync("data/db.json", JSON.stringify(obj)); */
+  // });
 
-    return res.json("ok");
-  });
+  // return res.json("ok");
+  // });
 
   var cpUpload = store.fields([{ name: "files", maxCount: 4 }]);
   router.post(
@@ -150,6 +179,9 @@ module.exports = function (router) {
     store.array("files", 4),
     async (req, res) => {
       // console.log(req.files);
+
+      if (req.files.length > 4)
+        return res.json({ too_many_pictures_at_once: true });
 
       let user = await UserModel.findById(req.userId).exec();
 
@@ -222,11 +254,11 @@ module.exports = function (router) {
     }
   );
 
-  var cpUpload = store.fields([{ name: "files", maxCount: 4 }]);
+  var cpUpload = store.fields([{ name: "files", maxCount: 1 }]);
   router.put(
     "/blogs/:id/edit",
     authorized,
-    store.array("files", 4),
+    store.array("files", 1),
     async (req, res) => {
       // console.log(req);
       let { id } = req.params;
@@ -251,6 +283,26 @@ module.exports = function (router) {
         blog.title = title;
         blog.save();
       });
+
+      if (req.files.length === 0) return res.json({ no_image_action: true });
+      if (req.files.length > 1)
+        return res.json({ too_many_pictures_at_once: true });
+
+      let images = await ImageModel.find({ blogID: id }).exec();
+
+      if (images.length > 3) {
+        ImageModel.findOne({ blogID: id })
+          .sort({ created_at: 1 })
+          .exec(function (error, image) {
+            if (error) console.log("error ", error);
+            else {
+              ImageModel.findByIdAndRemove(image._id, function (error, image) {
+                if (error) console.log("error ", error);
+                else console.log("image deleted");
+              });
+            }
+          });
+      }
 
       for (file of req.files) {
         let image = new ImageModel({
@@ -283,7 +335,7 @@ module.exports = function (router) {
     }
   );
 
-  // router.patch("/blogs/:id/edit", authorized, async (req, res) => {
+  // router.put("/blogs/:id/edit", authorized, async (req, res) => {
   //   console.log("req.body ", req.body);
   //   let { id } = req.params;
   //   let blog = await BlogModel.findById(id).exec();

@@ -10,13 +10,9 @@ const { StatusCodes: HttpStatus } = require("http-status-codes");
 const hidePoweredBy = require("hide-powered-by");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
-// const bodyParser = require("body-parser");
 
 // var csrf = require("csurf");
 require("dotenv").config();
-
-// var indexRouter = require("./routes");
-// const router = require("./routes");
 
 var app = express();
 app.use(express.json());
@@ -80,6 +76,15 @@ app.use(function (req, res, next) {
   next();
 });
 app.use(require("./routes"));
+
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static("client/build"));
+//   a;
+
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+//   });
+// }
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
