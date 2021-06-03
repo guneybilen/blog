@@ -10,14 +10,24 @@ const { StatusCodes: HttpStatus } = require("http-status-codes");
 const hidePoweredBy = require("hide-powered-by");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
 
-// var csrf = require("csurf");
 require("dotenv").config();
 
 var app = express();
-app.use(express.json());
+
+const limiter = rateLimit({
+  max: 300,
+  windowMs: 60 * 60 * 1000,
+  message: "too many requests from the same IP, please try in an hour",
+});
+app.use(limiter);
+
+// body parser, ready data from the body into req.body
+app.use(express.json({ limit: "50kb" }));
 app.use(express.urlencoded({ extended: false }));
 
+// set security HTTP headers
 app.use(helmet());
 app.use(cookieParser());
 app.use(
@@ -45,24 +55,19 @@ app.use(passport.initialize());
 //   })
 // );
 
-// var csrfProtection = csrf({ cookie: true });
-
 app.use(hidePoweredBy({ setTo: "PHP 5.2.0" }));
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
-// app.use(
-//   express.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 })
-// );
-// app.use(express.json());
+
 app.use(logger("dev"));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header("Access-Control-Allow-Methods", "GET,PUT,PATCH,POST,DELETE");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
@@ -75,6 +80,7 @@ app.use(function (req, res, next) {
   );
   next();
 });
+// app.use(require("./routes"));
 app.use(require("./routes"));
 
 // if (process.env.NODE_ENV === "production") {

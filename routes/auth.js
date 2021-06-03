@@ -3,9 +3,9 @@ const { userValidator: validator } = require("../validator");
 const { authController: auth } = require("../controllers");
 var express = require("express");
 var app = express();
-var csrf = require("csurf");
-var csrfProtection = csrf({ cookie: true });
-var parseForm = express.urlencoded({ extended: false });
+// var csrf = require("csurf");
+// var csrfProtection = csrf({ cookie: true });
+// var parseForm = express.urlencoded({ extended: false });
 
 module.exports = function (router) {
   // router.get("/", csrfProtection, function (req, res, next) {
@@ -26,14 +26,7 @@ module.exports = function (router) {
   });
 
   router.get("/users", auth.user);
-  router.post(
-    "/sign-in",
-    middleware.isGuest,
-    validator.signIn,
-    parseForm,
-    csrfProtection,
-    auth.signIn
-  );
+  router.post("/sign-in", middleware.isGuest, validator.signIn, auth.signIn);
   router.post("/sign-up", middleware.isGuest, validator.signUp, auth.signUp);
   router.post("/logout", auth.logout);
   router.post("/verify-request", middleware.isUnverfied, auth.verifyRequest);
