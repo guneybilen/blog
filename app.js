@@ -4,6 +4,9 @@ var path = require("path");
 var logger = require("morgan");
 var favicon = require("serve-favicon");
 const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+// var hpp = require("hpp");
 var cookieFlashMessages = require("cookie-flash-messages");
 const cors = require("cors");
 const { StatusCodes: HttpStatus } = require("http-status-codes");
@@ -11,6 +14,7 @@ const hidePoweredBy = require("hide-powered-by");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const { duration } = require("moment");
 
 require("dotenv").config();
 
@@ -26,6 +30,17 @@ app.use(limiter);
 // body parser, ready data from the body into req.body
 app.use(express.json({ limit: "50kb" }));
 app.use(express.urlencoded({ extended: false }));
+
+// data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+//protection against malicious html that is injected with javascript
+app.uss(xss());
+
+//prevent parameter pollution, you can white list hpp as well
+// app.uss(hpp());
+//prevent parameter pollution, you can white list hpp as well
+// app.uss(hpp({ whitelist: ["duration"] }));
 
 // set security HTTP headers
 app.use(helmet());

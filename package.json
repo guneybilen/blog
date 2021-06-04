@@ -17,9 +17,11 @@
     "ejs": "~2.6.1",
     "empty-dir": "^2.0.0",
     "express": "~4.16.1",
+    "express-mongo-sanitize": "^2.1.0",
     "express-rate-limit": "^5.2.6",
     "helmet": "^4.6.0",
     "hide-powered-by": "^1.1.0",
+    "hpp": "^0.2.3",
     "http-errors": "~1.6.3",
     "http-status-codes": "^2.1.4",
     "i18next": "^20.2.2",
@@ -36,7 +38,8 @@
     "serve-favicon": "^2.5.0",
     "sharp": "^0.28.2",
     "validator": "^13.6.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "xss-clean": "^0.1.1"
   },
   "devDependencies": {
     "faker": "^5.5.3",
