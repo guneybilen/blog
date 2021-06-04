@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(mongoSanitize());
 
 //protection against malicious html that is injected with javascript
-app.uss(xss());
+app.use(xss());
 
 //prevent parameter pollution, you can white list hpp as well
 // app.uss(hpp());
