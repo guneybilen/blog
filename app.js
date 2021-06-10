@@ -123,6 +123,8 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
+process.on("warning", (e) => console.warn(e.stack));
+
 process.on("unhandledRejection", (error) => {
   console.error(error); // This prints error with stack included (as for normal errors)
   throw error; // Following best practices re-throw error and let the process exit with error code

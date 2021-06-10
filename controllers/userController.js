@@ -207,6 +207,7 @@ const userController = {
   ////////////////////////////////////////////////////////////////////////////////
 
   sign_in: async (req, res, next) => {
+    // console.log(req.body);
     let user = await UserModel.findOne({ email: req.body.email }).exec();
 
     // console.log("user ", user);
@@ -220,6 +221,11 @@ const userController = {
     // Function defined at bottom of app.js
     let isValid = user.comparePassword(req.body.password);
 
+    if (!isValid) {
+      return res
+        .status(403)
+        .json({ success: false, msg: "incorrect password" });
+    }
     const expiresIn = "1d";
 
     if (isValid) {

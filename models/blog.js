@@ -1,8 +1,8 @@
 const mongoose = require("../mongoose");
 const { Schema } = mongoose;
-const Image = require("./image").schema;
-const Comment = require("./comment").schema;
-const VideoURL = require("./videoURL").schema;
+const Image = require("./image");
+const Comment = require("./comment");
+const VideoURL = require("./videoURL");
 const mongoosePaginate = require("mongoose-paginate-v2");
 
 const blogSchema = new Schema(

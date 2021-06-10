@@ -2,7 +2,7 @@ const mongoose = require("../mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 
 const { Schema } = mongoose;
-const Blog = require("./blog").schema;
+const Blog = require("./blog");
 
 const imageSchema = new Schema(
   {

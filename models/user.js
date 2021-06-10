@@ -2,14 +2,14 @@ const bcrypt = require("bcryptjs");
 
 // const mongoose = require("@app/mongoose");
 const mongoose = require("../mongoose");
-const Image = require("./image").schema;
+const Image = require("./image");
 
 const { Schema } = mongoose;
 
 // const mongoosePaginate = require("mongoose-paginate-v2");
 
 // const Blog = require("@app/module/auth/blog").schema;
-const Blog = require("./blog").schema;
+const Blog = require("./blog");
 
 const userSchema = new Schema(
   {
