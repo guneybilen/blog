@@ -243,6 +243,8 @@ const userController = {
         token: "Bearer " + token,
         expires: expiresIn,
         userName: user.userName,
+        error: "",
+        logged: true,
       });
     } else {
       res
