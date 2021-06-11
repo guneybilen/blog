@@ -263,7 +263,14 @@ const userController = {
     if (!validator.isEmail(email)) {
       return res.status(411).send();
     }
-    if (userName.length < 3 || userName.length > 20) {
+
+    let userForEmail = await UserModel.findOne({ email }).exec();
+
+    if (userForEmail) {
+      return res.status(409).send();
+    }
+
+    if (userName.length < 3 || userName.length > 30) {
       return res.status(411).send();
     }
 
@@ -271,10 +278,8 @@ const userController = {
       return res.status(403).send();
     }
 
-    let userForEmail = await UserModel.findOne({ email }).exec();
-
-    if (userForEmail) {
-      return res.status(409).send();
+    if (password.length < 8 || password.length > 20) {
+      return res.status(422).send();
     }
 
     let userForUserName = await UserModel.findOne({ userName }).exec();

@@ -15,7 +15,7 @@ const userSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
     email: { type: String, minLength: 3, maxLength: 50, lowercase: true },
-    password: { type: String, minLength: 3, maxLength: 20, lowercase: true },
+    password: { type: String, minLength: 8, maxLength: 30, required: true },
     firstName: String,
     lastName: String,
     locale: String,
@@ -42,6 +42,16 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", async function save(next) {
+  if (!this.isModified("password")) return next();
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+});
 
 userSchema.statics.emailExist = function (email) {
   return this.findOne({ email });
