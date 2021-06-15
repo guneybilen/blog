@@ -279,7 +279,7 @@ const userController = {
       return res.status(403).send();
     }
 
-    if (password.length < 8 || password.length > 20) {
+    if (password.length < 8 || password.length > 30) {
       return res.status(422).send();
     }
 
@@ -338,10 +338,11 @@ const userController = {
 
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
-    const resetURL = `${req.protocol}://${req.get(
-      "host"
-    )}/resetPassword/${resetToken}`;
+    // const resetURL = `${req.protocol}://${req.get(
+    //   "host"
+    // )}/resetPassword/${resetToken}`;
 
+    const resetURL = `${process.env.CLIENT_URL}/resetPassword/${resetToken}`;
     const message = `basak's blog\nşifrenizi mi unuttunuz? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.\n\nGönderdiğimiz link 10 dakika sonra geçersiz olacaktır.\nEğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız\nbu emaili dikkate almayınız`;
 
     const messageHTML =
@@ -375,6 +376,69 @@ const userController = {
       return res.status(500).json({
         success: false,
         msg: "there was an error sending password reset token email",
+      });
+    }
+  },
+
+  resetPassword: async (req, res, next) => {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "token is invalid or expired" });
+    }
+    let password = req.body.password;
+    let passwordConfirm = req.body.passwordConfirm;
+
+    if (password !== passwordConfirm) {
+      return res.status(403).json({
+        success: false,
+        msg: "password and password confirmation must be equal",
+      });
+    }
+
+    if (password.length < 8 || password.length > 30) {
+      return res.status(422).json({
+        success: false,
+        msg: "password can not be less than 8 characters or longer than 30 characters",
+      });
+    }
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    try {
+      const payload = {
+        sub: user._id,
+        iat: Date.now(),
+      };
+      // console.log(process.env.SECRETORKEY);
+      const token = jwt.sign(payload, process.env.SECRETORKEY, {
+        expiresIn: expiresIn,
+      });
+
+      res.status(200).json({
+        success: true,
+        token: "Bearer " + token,
+        expires: expiresIn,
+        userName: user.userName,
+        error: "",
+        logged: true,
+      });
+    } catch (error) {
+      console.log("resetPassword error in userController: ", error.message);
+      res.status(500).json({
+        success: false,
+        msg: "a problem occurred and we could log you in",
       });
     }
   },

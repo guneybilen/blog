@@ -25,7 +25,7 @@ const userSchema = new Schema(
       type: String,
       trim: true,
       minLength: 3,
-      maxLength: 20,
+      maxLength: 30,
     },
     account: {
       verification: {
