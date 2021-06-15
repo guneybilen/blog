@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 // const mongoose = require("@app/mongoose");
 const mongoose = require("../mongoose");
@@ -10,6 +11,7 @@ const { Schema } = mongoose;
 
 // const Blog = require("@app/module/auth/blog").schema;
 const Blog = require("./blog");
+const { stringify } = require("querystring");
 
 const userSchema = new Schema(
   {
@@ -39,7 +41,11 @@ const userSchema = new Schema(
         expiresIn: Date,
       },
     },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
+
   { timestamps: true }
 );
 
@@ -63,6 +69,21 @@ userSchema.statics.userNameExist = function (userName) {
 
 userSchema.methods.comparePassword = function (password) {
   return bcrypt.compareSync(password, this.password);
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  console.log({ resetToken }, this.passwordResetToken);
+
+  this.passwordResetExpires = Date.now() - 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 userSchema.methods.toJSON = function () {

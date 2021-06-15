@@ -11,10 +11,12 @@ module.exports = (passport) => {
     new JwtStrategy(opts, function (jwt_payload, done) {
       // console.log("jwt_payload ", jwt_payload);
       UserModel.findOne({ _id: jwt_payload.sub }, function (err, user) {
+        console.log("exp", jwt_payload.exp);
+        console.log("now", Date.now());
         if (err) {
           return done(err, false);
         }
-        if (jwt_payload.exp < jwt_payload.iat) {
+        if (jwt_payload.exp < Date.now()) {
           return done(err, false);
         } else if (user) {
           return done(null, user);

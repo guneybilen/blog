@@ -1,16 +1,29 @@
-const path = require("path");
+// const path = require("path");
 const nodemailer = require("nodemailer");
 // const Email = require("email-templates");
-const i18next = require("i18next");
+// const i18next = require("i18next");
 
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,
-  port: process.env.MAIL_PORT,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASSWORD,
-  },
-});
+const SendEmail = async (options) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASSWORD,
+    },
+  });
+
+  const mailOptions = {
+    from: "admin <admin@basakblog.com>",
+    to: options.email,
+    subject: options.subject,
+    text: options.message,
+    html: options.messageHTML,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = SendEmail;
 
 // const mail = new Email({
 //   views: {
