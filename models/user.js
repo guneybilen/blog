@@ -52,6 +52,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function save(next) {
   if (!this.isModified("password")) return next();
   try {
+    this.passwordChangedAt = Date.now();
     this.password = await bcrypt.hash(this.password, 10);
     return next();
   } catch (err) {
@@ -81,7 +82,7 @@ userSchema.methods.createPasswordResetToken = function () {
 
   console.log({ resetToken }, this.passwordResetToken);
 
-  this.passwordResetExpires = Date.now() - 10 * 60 * 1000;
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
 };

@@ -1,4 +1,5 @@
 var mongoose = require("mongoose");
+const crypto = require("crypto");
 var moment = require("moment");
 const jwt = require("jsonwebtoken");
 var validator = require("validator");
@@ -216,7 +217,7 @@ const userController = {
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, msg: "could not find user" });
+        .json({ success: false, message: "could not find user" });
     }
 
     // Function defined at bottom of app.js
@@ -225,7 +226,7 @@ const userController = {
     if (!isValid) {
       return res
         .status(403)
-        .json({ success: false, msg: "incorrect password" });
+        .json({ success: false, message: "incorrect password" });
     }
     const expiresIn = 86400000;
 
@@ -250,7 +251,7 @@ const userController = {
     } else {
       res
         .status(401)
-        .json({ success: false, msg: "you entered the wrong password" });
+        .json({ success: false, message: "you entered the wrong password" });
     }
   },
 
@@ -333,7 +334,7 @@ const userController = {
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, msg: "could not find user" });
+        .json({ success: false, message: "could not find user" });
     }
 
     const resetToken = user.createPasswordResetToken();
@@ -367,7 +368,7 @@ const userController = {
 
       return res.status(200).json({
         success: true,
-        msg: "password reset token has been sent to your email address",
+        message: "password reset token has been sent to your email address",
       });
     } catch (error) {
       user.passwordResetToken = undefined;
@@ -375,7 +376,7 @@ const userController = {
       await user.save({ validateBeforeSave: false });
       return res.status(500).json({
         success: false,
-        msg: "there was an error sending password reset token email",
+        message: "there was an error sending password reset token email",
       });
     }
   },
@@ -386,37 +387,40 @@ const userController = {
       .update(req.params.token)
       .digest("hex");
 
-    const user = User.findOne({
+    const user = await UserModel.findOne({
       passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: Date.now() },
-    });
+    }).exec();
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, msg: "token is invalid or expired" });
+        .json({ success: false, message: "token is invalid or expired" });
     }
     let password = req.body.password;
     let passwordConfirm = req.body.passwordConfirm;
 
-    if (password !== passwordConfirm) {
-      return res.status(403).json({
-        success: false,
-        msg: "password and password confirmation must be equal",
-      });
-    }
-
     if (password.length < 8 || password.length > 30) {
       return res.status(422).json({
         success: false,
-        msg: "password can not be less than 8 characters or longer than 30 characters",
+        message:
+          "password can not be less than 8 characters or longer than 30 characters",
       });
     }
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
+
+    if (password !== passwordConfirm) {
+      return res.status(403).json({
+        success: false,
+        message: "password and password confirmation must be equal",
+      });
+    }
 
     try {
+      // console.log("user", user.email);
+      const expiresIn = 86400000;
+      user.password = password;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
       const payload = {
         sub: user._id,
         iat: Date.now(),
@@ -438,7 +442,7 @@ const userController = {
       console.log("resetPassword error in userController: ", error.message);
       res.status(500).json({
         success: false,
-        msg: "a problem occurred and we could log you in",
+        message: "a problem occurred and we could log you in",
       });
     }
   },
