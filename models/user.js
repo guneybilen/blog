@@ -1,7 +1,6 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
-// const mongoose = require("@app/mongoose");
 const mongoose = require("../mongoose");
 const Image = require("./image");
 
@@ -9,7 +8,6 @@ const { Schema } = mongoose;
 
 // const mongoosePaginate = require("mongoose-paginate-v2");
 
-// const Blog = require("@app/module/auth/blog").schema;
 const Blog = require("./blog");
 const { stringify } = require("querystring");
 
@@ -44,6 +42,13 @@ const userSchema = new Schema(
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    blogId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Blog",
+        required: false,
+      },
+    ],
   },
 
   { timestamps: true }

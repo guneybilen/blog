@@ -8,16 +8,6 @@ var moment = require("moment");
 moment().format();
 
 const textController = {
-  newBlog: async (req, res) => {
-    let blogId = mongoose.Types.ObjectId();
-
-    res.render("newBlog", {
-      csrfToken: req.csrfToken(),
-      title: "yetenek.club",
-      blogId: blogId,
-    });
-  },
-
   saveBlog: async (req, res, next) => {
     //let dir = "multer/uploads/images";
 
@@ -135,109 +125,6 @@ const textController = {
     return res.json(redir);
   },
 
-  get: async (req, res, next) => {
-    let answer = await cookieMiddleware(req, res, req.user);
-    if (!answer) {
-      res.flash("info", "lutfen giris yapiniz");
-      return res.redirect("/");
-    }
-    return res.render("readBlog", { kodName: res.locals.userName });
-  },
-
-  readBlogs: async (req, res) => {
-    const blogs = await blogService.verifyRequest(req, res);
-    let data = {
-      data: blogs,
-    };
-    return res.render("readBlog", {
-      dt: JSON.stringify(data),
-      comingFrom: "blogOkuma",
-    });
-  },
-
-  readBlogsByMe: async (req, res) => {
-    const blogs = await blogService.verifyRequestByMe(req, res);
-    let data = {
-      data: blogs,
-    };
-    return res.render("readBlog", {
-      user: res.locals.user,
-      dt: JSON.stringify(data),
-      comingFrom: "benimBlogum",
-    });
-  },
-
-  readBlog: async (req, res) => {
-    // console.log("req ", req);
-    // console.log("req ", req.query);
-    const blog = await BlogModel.findById(req.query.index.toString());
-    const user = await UserModel.findOne({ _id: blog.userId });
-    // console.log(user._id.toString() === blog.userId.toString());
-    // console.log(user);
-    console.log(blog);
-    console.log(user.userName);
-    return res.render("savedBlog", {
-      blog: blog,
-      user: user.userName,
-      owner:
-        res.locals.user.toString() === blog.userId.toString() ? true : false,
-    });
-  },
-
-  paging: async (req, res) => {
-    const blogs = await blogService.verifyRequest(req, res);
-    let {
-      totalDocs,
-      limit,
-      totalPages,
-      page,
-      pagingCounter,
-      hasPrevPage,
-      hasNextPage,
-      prevPage,
-      nextPage,
-    } = blogs;
-    // console.log("blogs ", blogs);
-    let data = {
-      totalDocs,
-      limit,
-      totalPages,
-      page,
-      pagingCounter,
-      hasPrevPage,
-      hasNextPage,
-      prevPage,
-      nextPage,
-    };
-    return res.status(200).send(data);
-  },
-
-  contact: async (req, res, next) => {
-    if (req && req.cookies && req.cookies.kodName) {
-      return res.render("contact", {
-        // kodName: req.cookies.kodName,
-      });
-    } else {
-      return res.render("contact", {
-        signedin: req.cookies.signedin ? req.cookies.signedin : false,
-      });
-    }
-  },
-
-  about: async (req, res, next) => {
-    if (req && req.cookies && req.cookies.kodName) {
-      return res.render("about", {
-        // kodName: req.cookies.kodName,
-      });
-    } else {
-      return res.render("about");
-    }
-  },
-
-  savedBlog: async (req, res, next) => {
-    res.flash("success", "kaydedilen blogunuz...");
-    return res.redirect("/savedBlog");
-  },
   renderSavedBlog: async (req, res, next) => {
     let blog = await BlogModel.findOne({ userId: res.locals.user })
       .sort({ updatedAt: -1 })

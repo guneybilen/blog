@@ -26,49 +26,20 @@ const authorized = require("../authentication/authorized");
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
 
+var options = {
+  sort: { date: -1 },
+  populate: "imageId",
+  lean: true,
+  limit: 10,
+};
 module.exports = function (router) {
-  router.post("/recordPost");
-  router.get("/author/:kodName/all", text.readBlogsByMe);
-  router.get("/author/:kodName/:page", text.readBlogsByMe);
-  router.get("/getBlogs/:page", text.readBlogs);
-  router.get("/blog", text.readBlog);
-  router.get("/getSavedBlog", text.savedBlog);
-  router.get("/savedBlog", text.renderSavedBlog);
-
-  router.get("/contact", text.contact);
-
-  // router.get("/form", csrfProtection, function (req, res) {
-  //   // res.header("Access-Control-Allow-Origin", "*");
-
-  //   res.send({ csrfToken: req.csrfToken() });
-  // });
-
   router.get("/blogs", async (req, res) => {
-    // console.log("req ", req);
-    let blogs = await BlogModel.find({})
-      .sort([["updatedAt", -1]])
-      .populate("userId")
-      .exec();
-    // let str = req.path.split(/\//);
-    // let index = str[2] ? str[2] : 1;
-    var options = {
-      //   // select: "title body author createdAt updatedAt",
-      sort: { date: -1 },
-      //   populate: "blogID",
-      //   lean: true,
-      //   offset: 0,
-      limit: 40,
-    };
+    let data = await BlogModel.paginate({}, options);
 
-    let images = await ImageModel.paginate({}, options).catch((e) =>
-      console.log(e.message)
-    );
-
-    // console.log(blogs);
-    let data = {
-      blogs,
-      images,
-    };
+    // let data = {
+    //   blogs,
+    //   // images,
+    // };
     // console.log(JSON.stringify(data));
     return res.status(200).json([data]);
 
@@ -82,15 +53,12 @@ module.exports = function (router) {
   });
 
   router.get("/blogs/:id", authorized, async (req, res) => {
-    // console.log(req.params.id);
+    console.log(req);
     let { id } = req.params;
-    let blog = await BlogModel.findById(id).populate("userId").exec();
-    let images = await ImageModel.find({ blogID: blog._id }).exec();
+    let blog = await BlogModel.findById(id).populate("imageId").exec();
+    let user = await UserModel.findById(req.userId);
 
-    // console.log(blog);
-    // console.log("req.userId.toString() ", req.userId.toString());
-    // console.log("blog.userId.toString() ", blog.userId.toString());
-    let sameUser = req.userId.toString() === blog.userId._id.toString();
+    let sameUser = user.userName === blog.author;
     if (sameUser) {
       console.log("user passed authorization test");
     } else {
@@ -99,7 +67,6 @@ module.exports = function (router) {
 
     let data = {
       blog,
-      images,
       sameUser,
     };
     return res.status(200).json([data]);
@@ -193,26 +160,29 @@ module.exports = function (router) {
 
       let newBlog = new BlogModel({
         _id: mongoose.Types.ObjectId(),
-        userId: user._id,
+        // userId: user._id,
         title: title,
+        author: user.userName,
+        email: user.email,
         body: body,
         // author: req.body.author,
       });
 
-      let savedBlog = await newBlog.save();
+      // let savedBlog = await newBlog.save();
+
+      user.blogId = newBlog._id;
+      await user.save({ validateBeforeSave: false });
 
       for (file of req.files) {
         let image = new ImageModel({
           _id: mongoose.Types.ObjectId(),
-          blogID: savedBlog._id,
+          blogID: newBlog._id,
           fieldname: file["fieldname"],
           originalname: file["originalname"],
           encoding: file["encoding"],
           mimetype: file["mimetype"],
-          destination: null,
-          filename: null,
-          path: null,
         });
+        newBlog.imageId.push(image.id);
         sharp(file["buffer"])
           .rotate()
           .resize(200)
@@ -226,7 +196,7 @@ module.exports = function (router) {
           .catch((err) => console.log(err));
       }
 
-      //console.log(savedBlog);
+      await newBlog.save();
 
       return res.json("ok");
 

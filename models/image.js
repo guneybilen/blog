@@ -7,11 +7,6 @@ const Blog = require("./blog");
 const imageSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    blogID: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Blog",
-      required: true,
-    },
     fieldname: String,
     originalname: String,
     encoding: String,
