@@ -53,7 +53,7 @@ module.exports = function (router) {
   });
 
   router.get("/blogs/:id", authorized, async (req, res) => {
-    console.log(req);
+    // console.log(req);
     let { id } = req.params;
     let blog = await BlogModel.findById(id).populate("imageId").exec();
     let user = await UserModel.findById(req.userId);

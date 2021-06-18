@@ -52,11 +52,14 @@ const userController = {
         expiresIn: expiresIn,
       });
 
+      const expiration = Date.now() + 86400000;
+
       res.status(200).json({
         success: true,
         token: "Bearer " + token,
-        expires: expiresIn,
+        expires: expiration,
         userName: user.userName,
+        success: true,
         error: "",
         logged: true,
       });
@@ -124,11 +127,11 @@ const userController = {
       const token = jwt.sign(payload, process.env.SECRETORKEY, {
         expiresIn: expiresIn,
       });
-
+      const expiration = Date.now() + 86400000;
       return res.status(200).json({
         success: true,
         token: "Bearer " + token,
-        expires: expiresIn,
+        expires: expiration,
         userName: userCreated.userName,
       });
     } catch (error) {
@@ -241,11 +244,12 @@ const userController = {
       const token = jwt.sign(payload, process.env.SECRETORKEY, {
         expiresIn: expiresIn,
       });
+      const expiration = Date.now() + 86400000;
 
       res.status(200).json({
         success: true,
         token: "Bearer " + token,
-        expires: expiresIn,
+        expires: expiration,
         userName: user.userName,
         error: "",
         logged: true,
