@@ -27,18 +27,14 @@ const userController = {
     // console.log("user ", user);
     // .then((user) => {
     if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "could not find user" });
+      return res.status(401).json({ message: "could not find user" });
     }
 
     // Function defined at bottom of app.js
     let isValid = user.comparePassword(req.body.password);
 
     if (!isValid) {
-      return res
-        .status(403)
-        .json({ success: false, message: "incorrect password" });
+      return res.status(403).json({ message: "incorrect password" });
     }
     const expiresIn = 86400000;
 
@@ -55,18 +51,14 @@ const userController = {
       const expiration = Date.now() + 86400000;
 
       res.status(200).json({
-        success: true,
         token: "Bearer " + token,
         expires: expiration,
         userName: user.userName,
-        success: true,
         error: "",
         logged: true,
       });
     } else {
-      res
-        .status(401)
-        .json({ success: false, message: "you entered the wrong password" });
+      res.status(401).json({ message: "you entered the wrong password" });
     }
   },
 
@@ -129,10 +121,10 @@ const userController = {
       });
       const expiration = Date.now() + 86400000;
       return res.status(200).json({
-        success: true,
         token: "Bearer " + token,
         expires: expiration,
         userName: userCreated.userName,
+        logged: true,
       });
     } catch (error) {
       console.log(error.message);
@@ -147,9 +139,7 @@ const userController = {
     // console.log("user ", user);
     // .then((user) => {
     if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "could not find user" });
+      return res.status(401).json({ message: "could not find user" });
     }
 
     const resetToken = user.createPasswordResetToken();
@@ -182,7 +172,6 @@ const userController = {
       });
 
       return res.status(200).json({
-        success: true,
         message: "password reset token has been sent to your email address",
       });
     } catch (error) {
@@ -190,7 +179,6 @@ const userController = {
       user.passwordResetExpires = undefined;
       await user.save({ validateBeforeSave: false });
       return res.status(500).json({
-        success: false,
         message: "there was an error sending password reset token email",
       });
     }
@@ -207,16 +195,13 @@ const userController = {
       passwordResetExpires: { $gt: Date.now() },
     }).exec();
     if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "token is invalid or expired" });
+      return res.status(401).json({ message: "token is invalid or expired" });
     }
     let password = req.body.password;
     let passwordConfirm = req.body.passwordConfirm;
 
     if (password.length < 8 || password.length > 30) {
       return res.status(422).json({
-        success: false,
         message:
           "password can not be less than 8 characters or longer than 30 characters",
       });
@@ -224,7 +209,6 @@ const userController = {
 
     if (password !== passwordConfirm) {
       return res.status(403).json({
-        success: false,
         message: "password and password confirmation must be equal",
       });
     }
@@ -247,7 +231,6 @@ const userController = {
       const expiration = Date.now() + 86400000;
 
       res.status(200).json({
-        success: true,
         token: "Bearer " + token,
         expires: expiration,
         userName: user.userName,
@@ -257,7 +240,6 @@ const userController = {
     } catch (error) {
       console.log("resetPassword error in userController: ", error.message);
       res.status(500).json({
-        success: false,
         message: "a problem occurred and we could log you in",
       });
     }
@@ -268,7 +250,6 @@ const userController = {
     req.logout();
     res.json({
       token: "",
-      success: true,
       loggedOut: true,
     });
   },

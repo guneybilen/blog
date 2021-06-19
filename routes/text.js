@@ -31,6 +31,7 @@ var options = {
   populate: "imageId",
   lean: true,
   limit: 10,
+  sort: { updatedAt: -1 },
 };
 module.exports = function (router) {
   router.get("/blogs", async (req, res) => {
@@ -250,7 +251,8 @@ module.exports = function (router) {
       let user = await UserModel.findById(req.userId).exec();
       let blog = await BlogModel.findById(id).exec();
 
-      if (req.userId.toString() === blog.userId.toString()) {
+      let sameUser = user.userName === blog.author;
+      if (sameUser) {
         console.log("user passed authorization test");
       } else {
         console.log("user failed authorization test");
