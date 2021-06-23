@@ -253,6 +253,62 @@ const userController = {
       loggedOut: true,
     });
   },
+
+  changeUsername: async (req, res, next) => {
+    try {
+      let { changedName } = req.body;
+      let { changedNameConfirm } = req.body;
+
+      if (changedName.length < 3 || changedName.length > 30) {
+        return res.status(411).send();
+      }
+
+      if (changedName !== changedNameConfirm) {
+        return res.status(403).json({
+          error: "changedName and changedNameConfirm must be equal",
+        });
+      }
+
+      let user = await UserModel.findById(req.userId).exec();
+
+      const filter = { author: user.userName };
+      const update = { author: changedName };
+
+      // `doc` is the document _before_ `update` was applied
+      await BlogModel.findOneAndUpdate(filter, update);
+
+      let blog = await BlogModel.findOne(update).exec();
+
+      let check1 = changedName === blog.author;
+
+      const filter2 = { userName: user.userName };
+      const update2 = { userName: changedName };
+
+      await UserModel.findOneAndUpdate(filter2, update2);
+
+      user = await UserModel.findOne(update2).exec();
+      console.log(user);
+
+      let check2 = user.userName === blog.author;
+
+      let finalDecision = check1 === check2;
+
+      if (finalDecision) {
+        return res
+          .status(200)
+          .json({ message: "username succseesfully changed" });
+      } else {
+        return res
+          .status(401)
+          .json({ error: "error finding user in the database" });
+      }
+    } catch (e) {
+      console.log(e.message);
+      return res.status(500).json({
+        error: e.message,
+      });
+    }
+  },
 };
 
 module.exports = userController;

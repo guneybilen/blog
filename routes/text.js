@@ -258,28 +258,55 @@ module.exports = function (router) {
         console.log("user failed authorization test");
       }
 
-      BlogModel.findById(id, function (err, blog) {
-        if (err) {
-          console.log(err);
-          return res.status(400).json({ success: false });
-        }
-        blog.body = body;
-        blog.title = title;
-        blog.save();
-      });
+      // BlogModel.findById(id, function (err, blog) {
+      //   if (err) {
+      //     console.log(err);
+      //     return res.status(400).json({ success: false });
+      //   }
+      //   blog.body = body;
+      //   blog.title = title;
+      //   blog.save();
+      // });
+
+      blog.body = body;
+      blog.title = title;
+      await blog.save();
 
       if (req.files.length === 0) return res.json({ no_image_action: true });
       if (req.files.length > 1)
         return res.json({ too_many_pictures_at_once: true });
 
-      let images = await ImageModel.find({ blogID: id }).exec();
+      // let images = await ImageModel.find({ blogID: id }).exec();
 
-      if (images.length > 3) {
-        ImageModel.findOne({ blogID: id })
+      // if (images.length > 3) {
+      //   ImageModel.findOne({ blogID: id })
+      //     .sort({ created_at: 1 })
+      //     .exec(function (error, image) {
+      //       if (error) console.log("error ", error);
+      //       else {
+      //         ImageModel.findByIdAndRemove(image._id, function (error, image) {
+      //           if (error) console.log("error ", error);
+      //           else console.log("image deleted");
+      //         });
+      //       }
+      //     });
+      // }
+
+      let imageIds = blog.imageId;
+
+      if (blog.imageId.length > 3) {
+        ImageModel.find({ _id: imageIds })
           .sort({ created_at: 1 })
+          .limit(1)
           .exec(function (error, image) {
             if (error) console.log("error ", error);
             else {
+              console.log("image ", image[0]._id);
+              let images = imageIds.filter(
+                (img) => img.toString() !== image[0]._id.toString()
+              );
+              console.log("images ", images);
+              blog.imageId = images;
               ImageModel.findByIdAndRemove(image._id, function (error, image) {
                 if (error) console.log("error ", error);
                 else console.log("image deleted");
@@ -288,26 +315,26 @@ module.exports = function (router) {
           });
       }
 
+      // console.log("blog ", blog);
+      await blog.save();
       for (file of req.files) {
-        let image = new ImageModel({
+        const image = new ImageModel({
           _id: mongoose.Types.ObjectId(),
-          blogID: id,
           fieldname: file["fieldname"],
           originalname: file["originalname"],
           encoding: file["encoding"],
           mimetype: file["mimetype"],
-          destination: null,
-          filename: null,
-          path: null,
         });
         sharp(file["buffer"])
           .rotate()
           .resize(200)
           .jpeg({ mozjpeg: true })
           .toBuffer()
-          .then((data) => {
+          .then(async (data) => {
             image.data = data;
-            image.save();
+            blog.imageId.push(image._id);
+            await image.save();
+            await blog.save();
             //console.log("image compressed and saved to MongoDB");
           })
           .catch((err) => console.log(err));
