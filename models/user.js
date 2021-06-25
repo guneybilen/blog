@@ -14,16 +14,16 @@ const { stringify } = require("querystring");
 const userSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    email: { type: String, minLength: 3, maxLength: 50, lowercase: true },
-    password: { type: String, minLength: 8, maxLength: 30, required: true },
+    email: { type: String, lowercase: true },
+    password: { type: String, minLength: 8, maxLength: 70, required: true },
     firstName: String,
     lastName: String,
     locale: String,
     userName: {
       type: String,
-      trim: true,
       minLength: 3,
       maxLength: 30,
+      lowercase: true,
     },
     account: {
       verification: {

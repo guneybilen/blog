@@ -26,6 +26,13 @@ const authorized = require("../authentication/authorized");
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
 
+const TITLE_LENGTH_MIN = 1;
+const TITLE_LENGTH_MAX = 100;
+const BODY_LENGTH_MIN = 1;
+const BODY_LENGTH_MAX = 10000;
+const MAX_PICTURE_UPLOAD = 4;
+const BLOG_IMAGE_COUNT = 3;
+
 var options = {
   sort: { date: -1 },
   populate: "imageId",
@@ -148,13 +155,13 @@ module.exports = function (router) {
     async (req, res) => {
       let { body } = req.body;
       let { title } = req.body;
-      if (title.length < 1 || title.length > 100)
+      if (title.length < TITLE_LENGTH_MIN || title.length > TITLE_LENGTH_MAX)
         return res.json({ title_too_short_or_long: true });
 
-      if (body.length < 1 || body.length > 10000)
+      if (body.length < BODY_LENGTH_MIN || body.length > BODY_LENGTH_MAX)
         return res.json({ body_too_short_or_long: true });
 
-      if (req.files.length > 4)
+      if (req.files.length > MAX_PICTURE_UPLOAD)
         return res.json({ too_many_pictures_at_once: true });
 
       let user = await UserModel.findById(req.userId).exec();
@@ -242,10 +249,10 @@ module.exports = function (router) {
       let { body } = req.body;
       let { title } = req.body;
 
-      if (title.length < 1 || title.length > 100)
+      if (title.length < TITLE_LENGTH_MIN || title.length > TITLE_LENGTH_MAX)
         return res.json({ title_too_short_or_long: true });
 
-      if (body.length < 1 || body.length > 10000)
+      if (body.length < BODY_LENGTH_MIN || body.length > BODY_LENGTH_MAX)
         return res.json({ body_too_short_or_long: true });
 
       let user = await UserModel.findById(req.userId).exec();
@@ -258,16 +265,6 @@ module.exports = function (router) {
         console.log("user failed authorization test");
       }
 
-      // BlogModel.findById(id, function (err, blog) {
-      //   if (err) {
-      //     console.log(err);
-      //     return res.status(400).json({ success: false });
-      //   }
-      //   blog.body = body;
-      //   blog.title = title;
-      //   blog.save();
-      // });
-
       blog.body = body;
       blog.title = title;
       await blog.save();
@@ -276,36 +273,20 @@ module.exports = function (router) {
       if (req.files.length > 1)
         return res.json({ too_many_pictures_at_once: true });
 
-      // let images = await ImageModel.find({ blogID: id }).exec();
-
-      // if (images.length > 3) {
-      //   ImageModel.findOne({ blogID: id })
-      //     .sort({ created_at: 1 })
-      //     .exec(function (error, image) {
-      //       if (error) console.log("error ", error);
-      //       else {
-      //         ImageModel.findByIdAndRemove(image._id, function (error, image) {
-      //           if (error) console.log("error ", error);
-      //           else console.log("image deleted");
-      //         });
-      //       }
-      //     });
-      // }
-
       let imageIds = blog.imageId;
 
-      if (blog.imageId.length > 3) {
+      if (blog.imageId.length > BLOG_IMAGE_COUNT) {
         ImageModel.find({ _id: imageIds })
           .sort({ created_at: 1 })
           .limit(1)
           .exec(function (error, image) {
             if (error) console.log("error ", error);
             else {
-              console.log("image ", image[0]._id);
+              // console.log("image ", image[0]._id);
               let images = imageIds.filter(
                 (img) => img.toString() !== image[0]._id.toString()
               );
-              console.log("images ", images);
+              // console.log("images ", images);
               blog.imageId = images;
               ImageModel.findByIdAndRemove(image._id, function (error, image) {
                 if (error) console.log("error ", error);

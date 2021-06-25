@@ -10,7 +10,12 @@ const blogSchema = new Schema(
     _id: mongoose.Schema.Types.ObjectId,
     title: { type: String, minLength: 1, maxLength: 100 },
     body: { type: String, minLength: 1, maxLength: 10000 },
-    author: String,
+    author: {
+      type: String,
+      minLength: 3,
+      maxLength: 30,
+      lowercase: true,
+    },
     email: String,
     // images: [Image],
     imageId: [

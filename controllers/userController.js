@@ -12,6 +12,11 @@ const { use } = require("passport");
 var assert = require("assert");
 moment().format();
 
+const USERNAME_LENGTH_MIN = 3;
+const USERNAME_LENGTH_MAX = 30;
+const PASSWORD_LENGTH_MIN = 8;
+const PASSWORD_LENGTH_MAX = 70;
+
 const userController = {
   ////////////////////////////////////////////////////////////////////////////////
   //
@@ -68,7 +73,9 @@ const userController = {
     let { email } = req.body;
     let { password } = req.body;
     let { passwordConfirm } = req.body;
-    let { userName } = req.body;
+    let { userName: userNameTemp } = req.body;
+
+    userName = userNameTemp.trimLeft().trimRight().toLowerCase();
 
     // console.log(req.body);
     if (!validator.isEmail(email)) {
@@ -81,7 +88,10 @@ const userController = {
       return res.status(409).send();
     }
 
-    if (userName.length < 3 || userName.length > 30) {
+    if (
+      userName.length < USERNAME_LENGTH_MIN ||
+      userName.length > USERNAME_LENGTH_MAX
+    ) {
       return res.status(411).send();
     }
 
@@ -89,7 +99,10 @@ const userController = {
       return res.status(403).send();
     }
 
-    if (password.length < 8 || password.length > 30) {
+    if (
+      password.length < PASSWORD_LENGTH_MIN ||
+      password.length > PASSWORD_LENGTH_MAX
+    ) {
       return res.status(422).send();
     }
 
@@ -202,7 +215,10 @@ const userController = {
     let password = req.body.password;
     let passwordConfirm = req.body.passwordConfirm;
 
-    if (password.length < 8 || password.length > 30) {
+    if (
+      password.length < PASSWORD_LENGTH_MIN ||
+      password.length > PASSWORD_LENGTH_MAX
+    ) {
       return res.status(422).json({
         message:
           "password can not be less than 8 characters or longer than 30 characters",
@@ -257,10 +273,19 @@ const userController = {
   },
 
   changeUsername: async (req, res, next) => {
-    let { changedName } = req.body;
-    let { changedNameConfirm } = req.body;
+    let { changedName: changedNameTemp } = req.body;
+    let { changedNameConfirm: changedNameConfirmTemp } = req.body;
 
-    if (changedName.length < 3 || changedName.length > 30) {
+    changedName = changedNameTemp.trimLeft().trimRight().toLowerCase();
+    changedNameConfirm = changedNameConfirmTemp
+      .trimLeft()
+      .trimRight()
+      .toLowerCase();
+
+    if (
+      changedName.length < USERNAME_LENGTH_MIN ||
+      changedName.length > USERNAME_LENGTH_MAX
+    ) {
       return res.status(411).send();
     }
 
@@ -292,6 +317,7 @@ const userController = {
         user = await UserModel.findOne({
           userName: userForSearch.userName,
         }).session(session1);
+        console.log("user ", user);
         assert.ok(user.$session());
         user.userName = changedName;
 
