@@ -344,6 +344,46 @@ const userController = {
       });
     }
   },
+
+  changePassword: async (req, res, next) => {
+    let { password } = req.body;
+    let { passwordConfirm } = req.body;
+
+    console.log("password ", password);
+    if (
+      password.length < PASSWORD_LENGTH_MIN ||
+      password.length > PASSWORD_LENGTH_MAX
+    ) {
+      return res.status(411).send();
+    }
+
+    if (password !== passwordConfirm) {
+      return res.status(403).json({
+        error: "password and passwordConfirm must be equal",
+      });
+    }
+
+    try {
+      const session = await UserModel.startSession();
+      await session.withTransaction(async () => {
+        const user = await UserModel.findById(req.userId).session(session);
+        assert.ok(user.$session());
+        user.passwword = password;
+        assert.strictEqual(password, passwordConfirm);
+        await user.save();
+      });
+
+      session.endSession();
+      return res.status(200).json({
+        message: "password succseesfully changed",
+      });
+    } catch (e) {
+      console.log(e.message);
+      return res.status(500).json({
+        error: e.message,
+      });
+    }
+  },
 };
 
 module.exports = userController;

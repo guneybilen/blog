@@ -23,6 +23,7 @@ module.exports = function (router) {
   router.post("/resetPassword/:token", UserController.resetPassword);
 
   router.post("/changeUsername", authorized, UserController.changeUsername);
+  router.post("/changePassword", authorized, UserController.changePassword);
 
   router.get("/protected", authorized, (req, res, next) => {
     res.status(200).json({
