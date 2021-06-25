@@ -288,10 +288,13 @@ module.exports = function (router) {
               );
               // console.log("images ", images);
               blog.imageId = images;
-              ImageModel.findByIdAndRemove(image._id, function (error, image) {
-                if (error) console.log("error ", error);
-                else console.log("image deleted");
-              });
+              ImageModel.findByIdAndRemove(
+                image[0]._id,
+                function (error, image) {
+                  if (error) console.log("error ", error);
+                  else console.log("image deleted");
+                }
+              );
             }
           });
       }
