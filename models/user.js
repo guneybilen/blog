@@ -14,7 +14,13 @@ const { stringify } = require("querystring");
 const userSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    email: { type: String, lowercase: true },
+    email: {
+      type: String,
+      lowercase: true,
+      unique: true,
+      match:
+        /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
+    },
     password: { type: String, minLength: 8, maxLength: 70, required: true },
     firstName: String,
     lastName: String,
@@ -24,6 +30,7 @@ const userSchema = new Schema(
       minLength: 3,
       maxLength: 30,
       lowercase: true,
+      unique: true,
     },
     account: {
       verification: {

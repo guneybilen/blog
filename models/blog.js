@@ -15,6 +15,7 @@ const blogSchema = new Schema(
       minLength: 3,
       maxLength: 30,
       lowercase: true,
+      unique: true,
     },
     email: String,
     // images: [Image],
