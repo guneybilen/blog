@@ -32,19 +32,14 @@ const userSchema = new Schema(
       lowercase: true,
       unique: true,
     },
-    account: {
-      verification: {
-        verified: {
-          type: Boolean,
-          default: false,
-        },
-        token: String,
-        expiresIn: Date,
-      },
-      resetPassword: {
-        token: String,
-        expiresIn: Date,
-      },
+    status: {
+      type: String,
+      enum: ["Pending", "Active"],
+      default: "Pending",
+    },
+    confirmationCode: {
+      type: String,
+      unique: true,
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
@@ -92,7 +87,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  console.log({ resetToken }, this.passwordResetToken);
+  // console.log({ resetToken }, this.passwordResetToken);
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 

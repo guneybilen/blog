@@ -11,13 +11,6 @@ const fs = require("fs");
 const path = require("path");
 let dir = "/multer/uploads/images";
 var mongoose = require("mongoose");
-const passport = require("passport");
-const { authMiddleware: middleware } = require("../middleware");
-const {
-  authController: auth,
-  textController: text,
-  userController: user,
-} = require("../controllers");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const ImageModel = require("../models/image");
