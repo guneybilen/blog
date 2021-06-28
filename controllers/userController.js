@@ -1,12 +1,14 @@
 var mongoose = require("mongoose");
 const crypto = require("crypto");
 var moment = require("moment");
-const jwt = require("jsonwebtoken");
 var validator = require("validator");
 const { cookieMiddleware } = require("../middleWare/");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
-const SendEmail = require("../service/nodemailer");
+const { sendEmailService } = require("../service");
+const { forgotPasswordMailService } = require("../service");
+const { signupMailService } = require("../service");
+const { cookieService } = require("../service");
 const { use } = require("passport");
 var assert = require("assert");
 moment().format();
@@ -17,15 +19,6 @@ const PASSWORD_LENGTH_MIN = 8;
 const PASSWORD_LENGTH_MAX = 70;
 
 const userController = {
-  ////////////////////////////////////////////////////////////////////////////////
-  //
-  //
-  //
-  // AFTER REACT.JS
-  //
-  //
-  ////////////////////////////////////////////////////////////////////////////////
-
   sign_in: async (req, res, next) => {
     let user = await UserModel.findOne({ email: req.body.email }).exec();
 
@@ -39,29 +32,21 @@ const userController = {
       return res.status(401).json({ message: "could not find user" });
     }
 
-    // Function defined at bottom of app.js
     let isValid = user.comparePassword(req.body.password);
 
     if (!isValid) {
       return res.status(403).json({ message: "incorrect password" });
     }
-    const expiresIn = 86400000;
 
     if (isValid) {
       const payload = {
         sub: user._id,
         iat: Date.now(),
       };
-      // console.log(process.env.SECRETORKEY);
-      const token = jwt.sign(payload, process.env.SECRETORKEY, {
-        expiresIn: expiresIn,
-      });
 
-      const expiration = Date.now() + 86400000;
+      cookieService(res, payload);
 
       res.status(200).json({
-        token: "Bearer " + token,
-        expires: expiration,
         userName: user.userName,
         error: "",
         logged: true,
@@ -122,64 +107,52 @@ const userController = {
     }
 
     let userCreated;
-    try {
-      userCreated = new UserModel({
-        _id: mongoose.Types.ObjectId(),
-        email: email,
-        password: password,
-        userName: userName,
-        confirmationCode: signupConfirmToken,
-      });
+    // try {
+    userCreated = new UserModel({
+      _id: mongoose.Types.ObjectId(),
+      email: email,
+      password: password,
+      userName: userName,
+      confirmationCode: signupConfirmToken,
+    });
 
-      userCreated.save(function (error) {
-        if (error) return console.log(error);
-        else console.log("registraion of the user is successfull");
-      });
-      // const expiresIn = 86400000;
+    userCreated.save(function (error) {
+      if (error) return console.log(error);
+      else console.log("registraion of the user is successfull");
+    });
 
-      // const payload = {
-      //   sub: userCreated._id,
-      //   iat: Date.now(),
-      // };
-      // // console.log(process.env.SECRETORKEY);
-      // const token = jwt.sign(payload, process.env.SECRETORKEY, {
-      //   expiresIn: expiresIn,
-      // });
-      // const expiration = Date.now() + 86400000;
-      const resetURL = `${process.env.CLIENT_URL}/confirmAccount/${signupConfirmToken}`;
-      const message = `basak's blog\nTeşekkür ederiz.? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.`;
+    signupMailService(res, userCreated, signupConfirmToken);
+    //   const resetURL = `${process.env.CLIENT_URL}/confirmAccount/${signupConfirmToken}`;
+    //   const message = `basak's blog\nTeşekkür ederiz.? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.`;
 
-      const messageHTML =
-        "<br /><br /><h2>basak's blog</h2><h3>Teşekkür ederiz. Kayıt işleminizi tamamlayabilmemiz için \
-      lütfen <br /><a href=\"" +
-        resetURL +
-        `\">${process.env.CLIENT_URL}/confirmAccount/${signupConfirmToken}</a> linkine tıklayın...</h3>`;
+    //   const messageHTML =
+    //     "<br /><br /><h2>basak's blog</h2><h3>Teşekkür ederiz. Kayıt işleminizi tamamlayabilmemiz için \
+    //   lütfen <br /><a href=\"" +
+    //     resetURL +
+    //     `\">${process.env.CLIENT_URL}/confirmAccount/${signupConfirmToken}</a> linkine tıklayın...</h3>`;
 
-      await SendEmail({
-        email: userCreated.email,
-        subject: "kayıt işlemi tamamlama emili",
-        message: message,
-        messageHTML: messageHTML,
-      });
+    //   await SendEmail({
+    //     email: userCreated.email,
+    //     subject: "kayıt işlemi tamamlama emaili",
+    //     message: message,
+    //     messageHTML: messageHTML,
+    //   });
 
-      return res.status(200).json({
-        logged: false,
-        message: "pending",
-      });
-    } catch (error) {
-      console.log(error.message);
-      userCreated.confirmationCode = undefined;
-      userCreated.status = "Pending";
-      return res.status(500).send();
-    }
+    //   return res.status(200).json({
+    //     logged: false,
+    //     message: "pending",
+    //   });
+    // } catch (error) {
+    //   console.log(error.message);
+    //   userCreated.confirmationCode = undefined;
+    //   userCreated.status = "Pending";
+    //   return res.status(500).send();
+    // }
   },
 
   forgotPassword: async (req, res, next) => {
-    // console.log(req.body);
     let user = await UserModel.findOne({ email: req.body.email }).exec();
 
-    // console.log("user ", user);
-    // .then((user) => {
     if (!user) {
       return res.status(401).json({ message: "could not find user" });
     }
@@ -187,35 +160,36 @@ const userController = {
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetURL = `${process.env.CLIENT_URL}/resetPassword/${resetToken}`;
-    const message = `basak's blog\nşifrenizi mi unuttunuz? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.\n\nGönderdiğimiz link 10 dakika sonra geçersiz olacaktır.\nEğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız\nbu emaili dikkate almayınız`;
+    forgotPasswordMailService(res, user, resetToken);
+    // const resetURL = `${process.env.CLIENT_URL}/resetPassword/${resetToken}`;
+    // const message = `basak's blog\nşifrenizi mi unuttunuz? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.\n\nGönderdiğimiz link 10 dakika sonra geçersiz olacaktır.\nEğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız\nbu emaili dikkate almayınız`;
 
-    const messageHTML =
-      "<br /><br /><h2>basak's blog</h2><h3>şifrenizi mi unuttunuz? \
-      lütfen <br /><a href=\"" +
-      resetURL +
-      `\">${resetURL}</a> linkine tıklayın...</h3><h3><br />Gönderdiğimiz link 10 dakika sonra geçersiz olacaktır.
-      <br /> Eğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız <br /> bu emaili dikkate almayınız</h3>`;
+    // const messageHTML =
+    //   "<br /><br /><h2>basak's blog</h2><h3>şifrenizi mi unuttunuz? \
+    //   lütfen <br /><a href=\"" +
+    //   resetURL +
+    //   `\">${resetURL}</a> linkine tıklayın...</h3><h3><br />Gönderdiğimiz link 10 dakika sonra geçersiz olacaktır.
+    //   <br /> Eğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız <br /> bu emaili dikkate almayınız</h3>`;
 
-    try {
-      await SendEmail({
-        email: user.email,
-        subject: "şifre sıfırlama maili 10 dakika geçerlidir",
-        message: message,
-        messageHTML: messageHTML,
-      });
+    // try {
+    //   await sendEmailService({
+    //     email: user.email,
+    //     subject: "şifre sıfırlama maili 10 dakika geçerlidir",
+    //     message: message,
+    //     messageHTML: messageHTML,
+    //   });
 
-      return res.status(200).json({
-        message: "password reset token has been sent to your email address",
-      });
-    } catch (error) {
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
-      return res.status(500).json({
-        message: "there was an error sending password reset token email",
-      });
-    }
+    //   return res.status(200).json({
+    //     message: "password reset token has been sent to your email address",
+    //   });
+    // } catch (error) {
+    //   user.passwordResetToken = undefined;
+    //   user.passwordResetExpires = undefined;
+    //   await user.save({ validateBeforeSave: false });
+    //   return res.status(500).json({
+    //     message: "there was an error sending password reset token email",
+    //   });
+    // }
   },
 
   resetPassword: async (req, res, next) => {
@@ -251,7 +225,6 @@ const userController = {
     }
 
     try {
-      // console.log("user", user.email);
       const expiresIn = 86400000;
       user.password = password;
       user.passwordResetToken = undefined;
@@ -261,15 +234,10 @@ const userController = {
         sub: user._id,
         iat: Date.now(),
       };
-      // console.log(process.env.SECRETORKEY);
-      const token = jwt.sign(payload, process.env.SECRETORKEY, {
-        expiresIn: expiresIn,
-      });
-      const expiration = Date.now() + 86400000;
+
+      cookieService(res, payload);
 
       res.status(200).json({
-        token: "Bearer " + token,
-        expires: expiration,
         userName: user.userName,
         error: "",
         logged: true,
@@ -283,7 +251,13 @@ const userController = {
   },
 
   sign_out: (req, res, next) => {
-    console.log("signing out - message from userController, sign_out method");
+    // console.log("signing out - message from userController, sign_out method");
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: "lax",
+      path: "/",
+    });
     req.logout();
     res.json({
       token: "",
@@ -422,14 +396,10 @@ const userController = {
         sub: user._id,
         iat: Date.now(),
       };
-      // console.log(process.env.SECRETORKEY);
-      const token = jwt.sign(payload, process.env.SECRETORKEY, {
-        expiresIn: expiresIn,
-      });
-      const expiration = Date.now() + 86400000;
+
+      cookiService(res, payload);
+
       return res.status(201).json({
-        token: "Bearer " + token,
-        expires: expiration,
         userName: user.userName,
         logged: true,
         message: "success",

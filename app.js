@@ -15,6 +15,7 @@ const passport = require("passport");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const { duration } = require("moment");
+// const winstonLogger = require("./service");
 
 require("dotenv").config();
 
@@ -53,22 +54,10 @@ app.use(
   })
 );
 
-//app.use(cors());
+// app.use(cors());
 
 require("./authentication/pass_local_auth")(passport);
 app.use(passport.initialize());
-
-// app.use(
-//   csurf({
-//     cookie: {
-//       key: "_kjbkjbkjbkhbkhvvjhvjh",
-//       path: "/context-route",
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//       maxAge: 3600, // 1-hour
-//     },
-//   })
-// );
 
 app.use(hidePoweredBy({ setTo: "PHP 5.2.0" }));
 
@@ -81,13 +70,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  console.log(req.headers.origin);
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Credentials", true);
 
   res.header(
     "Access-Control-Allow-Headers",

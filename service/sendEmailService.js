@@ -3,7 +3,8 @@ const nodemailer = require("nodemailer");
 // const Email = require("email-templates");
 // const i18next = require("i18next");
 
-const SendEmail = async (options) => {
+const sendEmailService = async (options) => {
+  // console.log(options);
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_PORT,
@@ -23,7 +24,7 @@ const SendEmail = async (options) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = SendEmail;
+module.exports = sendEmailService;
 
 // const mail = new Email({
 //   views: {

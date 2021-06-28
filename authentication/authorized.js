@@ -1,7 +1,7 @@
 const passport = require("passport");
 
 function authorized(request, response, next) {
-  passport.authenticate("jwt", { session: false }, (error, user) => {
+  passport.authenticate("cookie", { session: false }, (error, user) => {
     if (error || !user) {
       return response.status(401).json({ message: "Unauthorized Message" });
     }

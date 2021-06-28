@@ -28,6 +28,7 @@ module.exports = function (router) {
   router.get("/confirmAccount/:token", UserController.confirmAccount);
 
   router.get("/protected", authorized, (req, res, next) => {
+    // console.log(req);
     res.status(200).json({
       logged: true,
       userName: req.userName,
