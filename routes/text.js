@@ -132,18 +132,25 @@ module.exports = function (router) {
 
   router.delete("/blogs/:id", authorized, async (req, res) => {
     let { id } = req.params;
+    CommentModel.findOneAndRemove({ blogID: id }, function (err, image) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        console.log("comment removed");
+      }
+    });
     ImageModel.findOneAndRemove({ blogID: id }, function (err, image) {
       if (err) {
         console.log(err.message);
       } else {
-        console.log("Removed image : ", image);
+        console.log("image removed");
       }
     });
     BlogModel.findByIdAndRemove(id, function (err, blog) {
       if (err) {
         console.log(err.message);
       } else {
-        console.log("Removed Blog : ", blog);
+        console.log("blog removed");
       }
     });
 
@@ -212,7 +219,7 @@ module.exports = function (router) {
       for (file of req.files) {
         let image = new ImageModel({
           _id: mongoose.Types.ObjectId(),
-          blogID: newBlog._id,
+          blogId: newBlog._id,
           fieldname: file["fieldname"],
           originalname: file["originalname"],
           encoding: file["encoding"],
@@ -332,6 +339,7 @@ module.exports = function (router) {
       for (file of req.files) {
         const image = new ImageModel({
           _id: mongoose.Types.ObjectId(),
+          blogId: blog._id,
           fieldname: file["fieldname"],
           originalname: file["originalname"],
           encoding: file["encoding"],

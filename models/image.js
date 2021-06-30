@@ -17,6 +17,11 @@ const imageSchema = new Schema(
     size: Number,
     data: Schema.Types.Mixed,
     contentType: String,
+    blogId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      required: true,
+    },
   },
   { timestamps: true }
 );
