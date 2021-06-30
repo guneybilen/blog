@@ -14,7 +14,9 @@ var mongoose = require("mongoose");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const ImageModel = require("../models/image");
+const CommentModel = require("../models/comment");
 const authorized = require("../authentication/authorized");
+const { cookieService } = require("../service");
 
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
@@ -28,14 +30,31 @@ const BLOG_IMAGE_COUNT = 3;
 
 var options = {
   sort: { date: -1 },
-  populate: "imageId",
+  populate: [
+    "imageId",
+    {
+      path: "blogAuthorId",
+      select: "userName",
+      model: "User",
+    },
+  ],
   lean: true,
   limit: 10,
   sort: { updatedAt: -1 },
 };
+let authorNames = [];
 module.exports = function (router) {
   router.get("/blogs", async (req, res) => {
     let data = await BlogModel.paginate({}, options);
+
+    // console.log(data);
+    // data.docs[0].blogAuthorId.forEach(async (id) => {
+    //   // console.log(id);
+    //   let user = await UserModel.find({ _id: id });
+    //   console.log("user ", user[0].userName);
+    //   let name = user[0].userName;
+    //   authorNames.push(name);
+    // });
 
     // let data = {
     //   blogs,
@@ -56,14 +75,29 @@ module.exports = function (router) {
   router.get("/blogs/:id", authorized, async (req, res) => {
     // console.log(req);
     let { id } = req.params;
-    let blog = await BlogModel.findById(id).populate("imageId").exec();
+    let blog = await BlogModel.findById(id)
+      .populate("imageId")
+      .populate([
+        {
+          path: "blogAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .exec();
     let user = await UserModel.findById(req.userId);
 
-    let sameUser = user.userName === blog.author;
-    if (sameUser) {
+    let resultBool = Object.values(blog.blogAuthorId).map((blog) => {
+      return blog._id.toString() === user._id.toString();
+    });
+
+    let sameUser;
+    if (resultBool.includes(true)) {
       console.log("user passed authorization test");
+      sameUser = true;
     } else {
       console.log("user failed authorization test");
+      sameUser = false;
     }
 
     let data = {
@@ -159,16 +193,17 @@ module.exports = function (router) {
 
       let user = await UserModel.findById(req.userId).exec();
 
+      console.log(user);
+
       let newBlog = new BlogModel({
         _id: mongoose.Types.ObjectId(),
-        // userId: user._id,
+        ownerId: user._id,
         title: title,
-        author: user.userName,
-        email: user.email,
+        blogAuthorId: user._id,
         body: body,
-        // author: req.body.author,
       });
 
+      console.log(newBlog);
       // let savedBlog = await newBlog.save();
 
       user.blogId = newBlog._id;
@@ -363,4 +398,60 @@ module.exports = function (router) {
     return res.json("ok");
     */ ////////////////////////////////////////////////////////////
   // });
+
+  router.post("/comment", authorized, async function (req, res) {
+    // console.log(req.body);
+
+    let { comment } = req.body;
+    let { blogId } = req.body;
+
+    if (comment < 1 || comment > 1000) return res.status(422).json();
+
+    let blog = await BlogModel.findById(blogId).exec();
+
+    // console.log(blog.blogAuthorId);
+
+    const newComment = new CommentModel({
+      _id: mongoose.Types.ObjectId(),
+      comment: comment,
+      blogId: blogId,
+      blogAuthorId: blog.blogAuthorId,
+      commentAuthorId: req.userId,
+    });
+
+    let savedComment = await newComment.save();
+
+    console.log(savedComment);
+    let retrievedComment = await CommentModel.findById(savedComment._id)
+      .populate([
+        {
+          path: "commentAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .select(["comment", "createdAt"])
+      .exec();
+
+    console.log("retrievedComment.comments[0]");
+    res.status(201).json({ comments: retrievedComment });
+  });
+
+  router.get("/comments/:blogId", authorized, async function (req, res) {
+    let comments = await CommentModel.find({
+      blogId: req.params.blogId,
+    })
+      .populate([
+        {
+          path: "commentAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .select(["comment", "createdAt"])
+      .exec();
+
+    console.log("comments", comments);
+    res.status(200).json(comments);
+  });
 };

@@ -43,7 +43,7 @@ module.exports = (passport) => {
       done
     ) {
       let decoded = jwt.verify(token, process.env.SECRETORKEY);
-      console.log(decoded);
+      // console.log(decoded);
       UserModel.findOne({ _id: decoded.sub }, function (err, user) {
         if (decoded.exp < Date.now()) {
           return done(err, false);

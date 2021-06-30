@@ -5,9 +5,23 @@ const { Schema } = mongoose;
 const commentSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    email: String,
-    userName: String,
-    commentText: String,
+    commentAuthorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    comment: { type: String, minLength: 1, maxLength: 1000, required: true },
+    blogId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      required: true,
+    },
+    blogAuthorId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+    ],
   },
   { timestamps: true }
 );

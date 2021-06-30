@@ -8,17 +8,15 @@ const mongoosePaginate = require("mongoose-paginate-v2");
 const blogSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    title: { type: String, minLength: 1, maxLength: 100 },
-    body: { type: String, minLength: 1, maxLength: 10000 },
-    author: {
-      type: String,
-      minLength: 3,
-      maxLength: 30,
-      lowercase: true,
-      unique: true,
-    },
-    email: String,
-    // images: [Image],
+    title: { type: String, minLength: 1, maxLength: 100, required: true },
+    body: { type: String, minLength: 1, maxLength: 10000, required: true },
+    blogAuthorId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+    ],
     imageId: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,13 +24,11 @@ const blogSchema = new Schema(
         required: false,
       },
     ],
-    // commentId: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Comment",
-    //     required: false,
-    //   },
-    // ],
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );

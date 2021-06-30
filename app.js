@@ -19,6 +19,16 @@ const { duration } = require("moment");
 
 require("dotenv").config();
 
+const Pusher = require("pusher");
+
+const pusher = new Pusher({
+  appId: process.env.APPID,
+  key: process.env.KEY,
+  secret: process.env.SECRET,
+  cluster: process.env.CLUSTER,
+  useTLS: process.env.USETLS,
+});
+
 var app = express();
 
 const limiter = rateLimit({
