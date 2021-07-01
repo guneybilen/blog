@@ -24,6 +24,7 @@ const cookieService = (res, payload) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production" ? true : false,
     sameSite: "lax",
+    path: "/",
   });
 };
 

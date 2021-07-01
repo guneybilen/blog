@@ -379,7 +379,8 @@ const userController = {
   },
 
   confirmAccount: async (req, res, next) => {
-    console.log(req.params.token);
+    console.log("req.params.token", req.params.token);
+
     let user = await UserModel.findOne({
       confirmationCode: req.params.token,
     }).exec();
@@ -390,22 +391,23 @@ const userController = {
     try {
       user.status = "Active";
       await user.save();
-      const expiresIn = 86400000;
 
       const payload = {
         sub: user._id,
         iat: Date.now(),
       };
 
-      cookiService(res, payload);
+      cookieService(res, payload);
 
-      return res.status(201).json({
-        userName: user.userName,
-        logged: true,
-        message: "success",
-      });
-    } catch (e) {
-      res.status(500).send({ message: err });
+      res.redirect("http://localhost:3000");
+
+      // return res.status(201).json({
+      //   userName: user.userName,
+      //   logged: true,
+      //   message: "success",
+      // });
+    } catch (error) {
+      res.status(500).send({ message: error.message });
     }
   },
 };

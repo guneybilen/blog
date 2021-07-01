@@ -9,6 +9,17 @@ const UserModel = require("../models/user");
 const UserController = require("../controllers/userController");
 const authorized = require("../authentication/authorized");
 
+function clear(req, res, next) {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: "lax",
+    path: "/",
+  });
+  req.logout();
+  next();
+}
+
 module.exports = function (router) {
   router.get("/sign_out", UserController.sign_out);
 
@@ -17,15 +28,15 @@ module.exports = function (router) {
     res.send("respond with a resource");
   });
 
-  router.post("/sign_in", UserController.sign_in);
-  router.post("/sign_up", UserController.sign_up);
-  router.post("/forgotPassword", UserController.forgotPassword);
-  router.post("/resetPassword/:token", UserController.resetPassword);
+  router.post("/sign_in", clear, UserController.sign_in);
+  router.post("/sign_up", clear, UserController.sign_up);
+  router.post("/forgotPassword", clear, UserController.forgotPassword);
+  router.post("/resetPassword/:token", clear, UserController.resetPassword);
 
   router.post("/changeUsername", authorized, UserController.changeUsername);
   router.post("/changePassword", authorized, UserController.changePassword);
 
-  router.get("/confirmAccount/:token", UserController.confirmAccount);
+  router.get("/confirmAccount/:token", clear, UserController.confirmAccount);
 
   router.get("/protected", authorized, (req, res, next) => {
     // console.log(req);

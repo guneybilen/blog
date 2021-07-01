@@ -429,7 +429,7 @@ module.exports = function (router) {
 
     let savedComment = await newComment.save();
 
-    console.log(savedComment);
+    // console.log(savedComment);
     let retrievedComment = await CommentModel.findById(savedComment._id)
       .populate([
         {
@@ -438,10 +438,18 @@ module.exports = function (router) {
           model: "User",
         },
       ])
+      .populate([
+        {
+          path: "blogAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
       .select(["comment", "createdAt"])
       .exec();
 
-    console.log("retrievedComment.comments[0]");
+    // console.log(retrievedComment);
+
     res.status(201).json({ comments: retrievedComment });
   });
 
@@ -459,7 +467,61 @@ module.exports = function (router) {
       .select(["comment", "createdAt"])
       .exec();
 
-    console.log("comments", comments);
+    // console.log("comments", comments);
     res.status(200).json(comments);
+  });
+
+  router.delete("/comment/:commentId", authorized, async function (req, res) {
+    // console.log(req.params.commentId);
+    // console.log(req.userId);
+    let comment = await CommentModel.findById(req.params.commentId)
+      .populate([
+        {
+          path: "commentAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .populate([
+        {
+          path: "blogAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .exec();
+
+    // console.log("comment1", comment);
+
+    let answer = comment.blogAuthorId.map((obj) => obj.id);
+
+    let passed1;
+    let passed2;
+    if (comment.commentAuthorId._id.toString() === req.userId.toString()) {
+      passed1 = true;
+    } else {
+      passed1 = false;
+    }
+    if (answer.includes(req.userId)) {
+      passed2 = true;
+    } else {
+      passed2 = false;
+    }
+
+    if (passed1 || passed2) {
+      CommentModel.findOneAndRemove(
+        { _id: req.params.commentId },
+        function (err, image) {
+          if (err) {
+            console.log(err.message);
+          } else {
+            console.log("comment removed");
+            res.status(200).json({ succes: true });
+          }
+        }
+      );
+    } else {
+      res.status(409).json();
+    }
   });
 };
