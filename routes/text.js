@@ -423,12 +423,15 @@ module.exports = function (router) {
 
     let commentCount = await CommentModel.countDocuments({});
 
+    // if (commentCount.length > 0 && !prevComment)
+    //   return res.status(400).json("has to have prevCommentId.");
+
     const newComment = new CommentModel({
       _id: mongoose.Types.ObjectId(),
       comment: comment,
       blogId: blogId,
       prevCommentId:
-        commentCount.length === 0 ? null : mongoose.Types.ObjectId(prevComment),
+        prevComment === null ? undefined : mongoose.Types.ObjectId(prevComment),
       blogAuthorId: blog.blogAuthorId,
       commentAuthorId: req.userId,
     });
@@ -471,6 +474,7 @@ module.exports = function (router) {
         },
       ])
       .select(["comment", "prevCommentId", "createdAt"])
+      .sort({ _id: 1, prevCommentId: 1 })
       .exec();
 
     // console.log("comments", comments);
