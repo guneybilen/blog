@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 const commentSchema = new Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
+    prevCommentId: mongoose.Schema.Types.ObjectId,
     commentAuthorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

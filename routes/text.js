@@ -408,21 +408,27 @@ module.exports = function (router) {
   // });
 
   router.post("/comment", authorized, async function (req, res) {
-    // console.log(req.body);
+    console.log("33333333333333333333333333333333333333");
 
     let { comment } = req.body;
+    let { prevComment } = req.body;
     let { blogId } = req.body;
 
-    if (comment < 1 || comment > 1000) return res.status(422).json();
+    console.log(prevComment);
+
+    if (comment.length < 1 || comment.length > 1000)
+      return res.status(422).json();
 
     let blog = await BlogModel.findById(blogId).exec();
 
-    // console.log(blog.blogAuthorId);
+    let commentCount = await CommentModel.countDocuments({});
 
     const newComment = new CommentModel({
       _id: mongoose.Types.ObjectId(),
       comment: comment,
       blogId: blogId,
+      prevCommentId:
+        commentCount.length === 0 ? null : mongoose.Types.ObjectId(prevComment),
       blogAuthorId: blog.blogAuthorId,
       commentAuthorId: req.userId,
     });
@@ -464,7 +470,7 @@ module.exports = function (router) {
           model: "User",
         },
       ])
-      .select(["comment", "createdAt"])
+      .select(["comment", "prevCommentId", "createdAt"])
       .exec();
 
     // console.log("comments", comments);
