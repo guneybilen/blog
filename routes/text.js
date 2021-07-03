@@ -411,17 +411,18 @@ module.exports = function (router) {
     console.log("33333333333333333333333333333333333333");
 
     let { comment } = req.body;
-    let { prevComment } = req.body;
+    let { level } = req.body;
     let { blogId } = req.body;
+    let { previousCommentId } = req.body;
 
-    console.log(prevComment);
+    console.log("previousCommentId", previousCommentId);
 
     if (comment.length < 1 || comment.length > 1000)
       return res.status(422).json();
 
     let blog = await BlogModel.findById(blogId).exec();
 
-    let commentCount = await CommentModel.countDocuments({});
+    // let commentCount = await CommentModel.countDocuments({});
 
     // if (commentCount.length > 0 && !prevComment)
     //   return res.status(400).json("has to have prevCommentId.");
@@ -430,36 +431,54 @@ module.exports = function (router) {
       _id: mongoose.Types.ObjectId(),
       comment: comment,
       blogId: blogId,
-      prevCommentId:
-        prevComment === null ? undefined : mongoose.Types.ObjectId(prevComment),
+      level: level,
+      previousCommentId:
+        previousCommentId === undefined
+          ? undefined
+          : mongoose.Types.ObjectId(previousCommentId),
+      // touched: level > 0 ? new Date() : undefined,
+      touched: Date.now(),
       blogAuthorId: blog.blogAuthorId,
       commentAuthorId: req.userId,
     });
 
-    let savedComment = await newComment.save();
+    await newComment.save();
 
-    // console.log(savedComment);
-    let retrievedComment = await CommentModel.findById(savedComment._id)
-      .populate([
-        {
-          path: "commentAuthorId",
-          select: "userName",
-          model: "User",
-        },
-      ])
-      .populate([
-        {
-          path: "blogAuthorId",
-          select: "userName",
-          model: "User",
-        },
-      ])
-      .select(["comment", "createdAt"])
-      .exec();
+    if (previousCommentId === undefined) {
+      return res.status(201).send();
+    }
 
-    // console.log(retrievedComment);
+    const filter = { _id: previousCommentId };
+    const update = { touched: Date.now() };
 
-    res.status(201).json({ comments: retrievedComment });
+    // `doc` is the document _before_ `update` was applied
+    await CommentModel.findOneAndUpdate(filter, update);
+    let modelofOuter = await CommentModel.findOne(filter);
+    // console.log("modelOfOuter1 ", modelofOuter);
+    let levelCount;
+    do {
+      console.log("modelofOuter.previousCommentId ", modelofOuter);
+
+      if (modelofOuter.previousCommentId) {
+        modelofOuter = await CommentModel.findOne({
+          previousCommentId: modelofOuter.previousCommentId,
+        }).exec();
+        // console.log("model outer", model.comment);
+        modelofOuter.touched = Date.now();
+        levelCount = modelofOuter.level;
+        await modelofOuter.save();
+        modelofOuter = modelofOuter.previousCommentId;
+        console.log(`levelCount ${levelCount}`);
+
+        --levelCount;
+      } else break;
+    } while (true);
+
+    console.log("modelOfOuter ", modelofOuter);
+    modelofOuter.touched = Date.now();
+    await modelofOuter.save();
+
+    res.status(201).send();
   });
 
   router.get("/comments/:blogId", authorized, async function (req, res) {
@@ -473,8 +492,15 @@ module.exports = function (router) {
           model: "User",
         },
       ])
-      .select(["comment", "prevCommentId", "createdAt"])
-      .sort({ _id: 1, prevCommentId: 1 })
+      .populate([
+        {
+          path: "previousCommentId",
+          // select: "userName",
+          model: "Comment",
+        },
+      ])
+      .select(["comment", "level", "touched", "createdAt"])
+      .sort({ touched: -1 })
       .exec();
 
     // console.log("comments", comments);
