@@ -75,7 +75,7 @@ app.use(hidePoweredBy({ setTo: "PHP 5.2.0" }));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-app.use(logger("dev"));
+// app.use(logger("dev"));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 

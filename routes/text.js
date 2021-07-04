@@ -408,24 +408,15 @@ module.exports = function (router) {
   // });
 
   router.post("/comment", authorized, async function (req, res) {
-    console.log("33333333333333333333333333333333333333");
-
     let { comment } = req.body;
     let { level } = req.body;
     let { blogId } = req.body;
     let { previousCommentId } = req.body;
 
-    console.log("previousCommentId", previousCommentId);
-
     if (comment.length < 1 || comment.length > 1000)
       return res.status(422).json();
 
     let blog = await BlogModel.findById(blogId).exec();
-
-    // let commentCount = await CommentModel.countDocuments({});
-
-    // if (commentCount.length > 0 && !prevComment)
-    //   return res.status(400).json("has to have prevCommentId.");
 
     const newComment = new CommentModel({
       _id: mongoose.Types.ObjectId(),
@@ -442,43 +433,41 @@ module.exports = function (router) {
       commentAuthorId: req.userId,
     });
 
+    console.log("newComment.comment ", newComment.comment);
     await newComment.save();
 
-    if (previousCommentId === undefined) {
+    if (newComment.previousCommentId === undefined) {
       return res.status(201).send();
     }
 
-    const filter = { _id: previousCommentId };
-    const update = { touched: Date.now() };
-
-    // `doc` is the document _before_ `update` was applied
-    await CommentModel.findOneAndUpdate(filter, update);
-    let modelofOuter = await CommentModel.findOne(filter);
-    // console.log("modelOfOuter1 ", modelofOuter);
-    let levelCount;
+    let prevComment = newComment.previousCommentId;
+    let modelOfMoreOuter;
+    let previousCommentIdForFirstDocument;
     do {
-      console.log("modelofOuter.previousCommentId ", modelofOuter);
-
-      if (modelofOuter.previousCommentId) {
-        modelofOuter = await CommentModel.findOne({
-          previousCommentId: modelofOuter.previousCommentId,
+      if (previousCommentIdForFirstDocument) {
+        let firstDocument = await CommentModel.findOne({
+          _id: previousCommentIdForFirstDocument,
         }).exec();
-        // console.log("model outer", model.comment);
-        modelofOuter.touched = Date.now();
-        levelCount = modelofOuter.level;
-        await modelofOuter.save();
-        modelofOuter = modelofOuter.previousCommentId;
-        console.log(`levelCount ${levelCount}`);
+        firstDocument.touched = Date.now();
+        await firstDocument.save();
+        console.log("firstDocument ", firstDocument);
+        break;
+      }
+      modelOfMoreOuter = await CommentModel.findOne({
+        _id: prevComment,
+      }).exec();
+      flag = modelOfMoreOuter.level === 1 ? true : false;
+      // console.log("modelOfMoreOuter1 ", modelOfMoreOuter);
+      modelOfMoreOuter.touched = Date.now();
+      await modelOfMoreOuter.save();
+      if (flag) {
+        previousCommentIdForFirstDocument = modelOfMoreOuter.previousCommentId;
+      } else {
+        prevComment = modelOfMoreOuter.previousCommentId;
+      }
+    } while (prevComment);
 
-        --levelCount;
-      } else break;
-    } while (true);
-
-    console.log("modelOfOuter ", modelofOuter);
-    modelofOuter.touched = Date.now();
-    await modelofOuter.save();
-
-    res.status(201).send();
+    return res.status(201).send();
   });
 
   router.get("/comments/:blogId", authorized, async function (req, res) {
