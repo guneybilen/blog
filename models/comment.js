@@ -7,6 +7,7 @@ const commentSchema = new Schema(
     _id: mongoose.Schema.Types.ObjectId,
     previousCommentId: mongoose.Schema.Types.ObjectId,
     level: { type: Number, default: 0, required: true },
+    nextCommentId: mongoose.Schema.Types.ObjectId,
     commentAuthorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -17,6 +17,7 @@ const ImageModel = require("../models/image");
 const CommentModel = require("../models/comment");
 const authorized = require("../authentication/authorized");
 const { cookieService } = require("../service");
+var colors = require("colors");
 
 var storage = multer.memoryStorage();
 var store = multer({ storage: storage });
@@ -418,7 +419,7 @@ module.exports = function (router) {
 
     let blog = await BlogModel.findById(blogId).exec();
 
-    const newComment = new CommentModel({
+    let newComment = new CommentModel({
       _id: mongoose.Types.ObjectId(),
       comment: comment,
       blogId: blogId,
@@ -427,46 +428,66 @@ module.exports = function (router) {
         previousCommentId === undefined
           ? undefined
           : mongoose.Types.ObjectId(previousCommentId),
-      // touched: level > 0 ? new Date() : undefined,
       touched: Date.now(),
       blogAuthorId: blog.blogAuthorId,
       commentAuthorId: req.userId,
     });
 
-    console.log("newComment.comment ", newComment.comment);
     await newComment.save();
 
-    if (newComment.previousCommentId === undefined) {
+    if (newComment.level === 0) {
       return res.status(201).send();
     }
 
-    let prevComment = newComment.previousCommentId;
-    let modelOfMoreOuter;
-    let previousCommentIdForFirstDocument;
-    do {
-      if (previousCommentIdForFirstDocument) {
-        let firstDocument = await CommentModel.findOne({
-          _id: previousCommentIdForFirstDocument,
+    let counter = newComment.level;
+    let toBeSearched = newComment.previousCommentId;
+    let topLevel = null;
+    while (counter > 0 && toBeSearched.level > 0) {
+      let outer;
+      if (topLevel !== null) {
+        outer = await CommentModel.findOne({
+          _id: toBeSearched,
         }).exec();
-        firstDocument.touched = Date.now();
-        await firstDocument.save();
-        console.log("firstDocument ", firstDocument);
-        break;
-      }
-      modelOfMoreOuter = await CommentModel.findOne({
-        _id: prevComment,
-      }).exec();
-      flag = modelOfMoreOuter.level === 1 ? true : false;
-      // console.log("modelOfMoreOuter1 ", modelOfMoreOuter);
-      modelOfMoreOuter.touched = Date.now();
-      await modelOfMoreOuter.save();
-      if (flag) {
-        previousCommentIdForFirstDocument = modelOfMoreOuter.previousCommentId;
       } else {
-        prevComment = modelOfMoreOuter.previousCommentId;
+        outer = await CommentModel.findOne({
+          previousCommentId: toBeSearched,
+        }).exec();
       }
-    } while (prevComment);
+      console.log("outer ", outer);
+      outer.touched = Date.now();
+      await outer.save();
+      topLevel = outer.previousCommentId;
+      --counter;
+    }
 
+    // if (newComment.previousCommentId === undefined) {
+    //   return res.status(201).send();
+    // }
+
+    // let modelOfMoreOuter = await CommentModel.findOne({
+    //   _id: newComment.previousCommentId,
+    // }).exec();
+
+    // modelOfMoreOuter.nextCommentId = newComment._id;
+    // await modelOfMoreOuter.save();
+
+    // if (modelOfMoreOuter.level === 0) return res.status(201).send();
+
+    // let outer = await CommentModel.findOne({
+    //   previousCommentId: newComment.previousCommentId,
+    // }).exec();
+    // while (
+    //   outer?._id.toString() &&
+    //   outer.previousCommentId.toString() === modelOfMoreOuter._id.toString()
+    // ) {
+    //   outer.touched = Date.now();
+    //   await outer.save();
+    //   newComment = newComment.previousCommentId;
+    //   console.log(outer);
+    //   outer = await CommentModel.findOne({
+    //     previousCommentId: newComment.previousCommentId,
+    //   }).exec();
+    // }
     return res.status(201).send();
   });
 
@@ -481,15 +502,16 @@ module.exports = function (router) {
           model: "User",
         },
       ])
-      .populate([
-        {
-          path: "previousCommentId",
-          // select: "userName",
-          model: "Comment",
-        },
+      .select([
+        "comment",
+        "level",
+        "touched",
+        "createdAt",
+        "previousCommentId",
+        "maxLevelBelow",
       ])
-      .select(["comment", "level", "touched", "createdAt"])
       .sort({ touched: -1 })
+      .limit(100)
       .exec();
 
     // console.log("comments", comments);
