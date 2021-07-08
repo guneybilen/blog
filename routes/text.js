@@ -414,8 +414,12 @@ module.exports = function (router) {
     let { blogId } = req.body;
     let { previousCommentId } = req.body;
 
+    console.log(level);
+
     if (comment.length < 1 || comment.length > 1000)
       return res.status(422).json();
+
+    level = req.body.level === null ? 0 : level;
 
     let blog = await BlogModel.findById(blogId).exec();
 
@@ -436,58 +440,70 @@ module.exports = function (router) {
     await newComment.save();
 
     if (newComment.level === 0) {
+      await newComment.save();
+
       return res.status(201).send();
     }
 
-    let counter = newComment.level;
-    let toBeSearched = newComment.previousCommentId;
-    let topLevel = null;
-    while (counter > 0 && toBeSearched.level > 0) {
-      let outer;
-      if (topLevel !== null) {
-        outer = await CommentModel.findOne({
-          _id: toBeSearched,
+    let modelOfOuter = await CommentModel.findOne({
+      _id: newComment.previousCommentId,
+    }).exec();
+
+    let modelOfMoreOuterId = modelOfOuter._id;
+
+    let modelOfMoreOuter = await CommentModel.findOne({
+      _id: modelOfOuter.previousCommentId,
+    }).exec();
+
+    modelOfOuter.nextCommentId = newComment._id;
+    await modelOfOuter.save();
+
+    let modelOfOuterNextCommentId = modelOfOuter.nextCommentId;
+
+    let arry = [];
+    let temp;
+    let flag = true;
+    let levelState = -1;
+    while (true) {
+      if (flag) {
+        temp = await CommentModel.findOne({
+          _id: newComment._id,
         }).exec();
+        arry.push(temp);
+        if (temp === null) break;
+        levelState = temp.level;
       } else {
-        outer = await CommentModel.findOne({
-          previousCommentId: toBeSearched,
+        temp = await CommentModel.findOne({
+          _id: temp,
         }).exec();
+        levelState = arry.level;
+        arry.push(temp);
       }
-      console.log("outer ", outer);
-      outer.touched = Date.now();
-      await outer.save();
-      topLevel = outer.previousCommentId;
-      --counter;
+      // console.log("temp ", temp);
+      temp = temp?.previousCommentId;
+      flag = false;
+      if (temp === undefined) break;
     }
 
-    // if (newComment.previousCommentId === undefined) {
-    //   return res.status(201).send();
-    // }
+    let ids = Object.values(arry).map((key) => key._id);
+    // console.log("ids ", ids);
 
-    // let modelOfMoreOuter = await CommentModel.findOne({
-    //   _id: newComment.previousCommentId,
-    // }).exec();
+    const filter = {
+      $and: [{ _id: { $in: ids } }, { _id: { $ne: newComment.nextCommentId } }],
+    };
 
-    // modelOfMoreOuter.nextCommentId = newComment._id;
-    // await modelOfMoreOuter.save();
+    // const filter = {
+    //   _id: { $in: ids },
+    // };
 
-    // if (modelOfMoreOuter.level === 0) return res.status(201).send();
+    const update = { touched: new Date() };
 
-    // let outer = await CommentModel.findOne({
-    //   previousCommentId: newComment.previousCommentId,
-    // }).exec();
-    // while (
-    //   outer?._id.toString() &&
-    //   outer.previousCommentId.toString() === modelOfMoreOuter._id.toString()
-    // ) {
-    //   outer.touched = Date.now();
-    //   await outer.save();
-    //   newComment = newComment.previousCommentId;
-    //   console.log(outer);
-    //   outer = await CommentModel.findOne({
-    //     previousCommentId: newComment.previousCommentId,
-    //   }).exec();
-    // }
+    let doc = await CommentModel.updateMany(filter, update).exec();
+    // console.log(doc);
+
+    // doc = await CommentModel.find(filter).exec();
+    // console.log(doc);
+
     return res.status(201).send();
   });
 
@@ -511,12 +527,42 @@ module.exports = function (router) {
         "maxLevelBelow",
       ])
       .sort({ touched: -1 })
-      .limit(100)
       .exec();
-
-    // console.log("comments", comments);
     res.status(200).json(comments);
   });
+  // router.get("/comments/:blogId", authorized, async function (req, res) {
+  //   let successCallBack = async (e) => {
+  //     console.log("e ", e);
+  //     let comments = await CommentModel.find({
+  //       blogId: req.params.blogId,
+  //     })
+  //       .populate([
+  //         {
+  //           path: "commentAuthorId",
+  //           select: "userName",
+  //           model: "User",
+  //         },
+  //       ])
+  //       .select([
+  //         "comment",
+  //         "level",
+  //         "touched",
+  //         "createdAt",
+  //         "previousCommentId",
+  //         "maxLevelBelow",
+  //       ])
+  //       // .limit(100)
+  //       .exec();
+  //     res.status(200).json(comments);
+  //   };
+
+  //   let errorCallback = () => console.log("error");
+
+  //   CommentModel.aggregate([
+  //     { $sort: { level: 1 } },
+  //     { $sort: { touched: 1 } },
+  //   ]).then(successCallBack, errorCallback);
+  // });
 
   router.delete("/comment/:commentId", authorized, async function (req, res) {
     // console.log(req.params.commentId);
@@ -540,7 +586,7 @@ module.exports = function (router) {
 
     // console.log("comment1", comment);
 
-    let answer = comment.blogAuthorId.map((obj) => obj.id);
+    let answer = comment.blogAuthorId?.map((obj) => obj.id);
 
     let passed1;
     let passed2;
