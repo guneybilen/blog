@@ -40,6 +40,7 @@
     "pusher": "^5.0.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.28.2",
+    "socket.io": "^4.1.2",
     "validator": "^13.6.0",
     "winston": "^3.3.3",
     "xss-clean": "^0.1.1"
@@ -47,5 +48,9 @@
   "devDependencies": {
     "faker": "^5.5.3",
     "nodemon": "^2.0.7"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.3",
+    "utf-8-validate": "^5.0.5"
   }
 }

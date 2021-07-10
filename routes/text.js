@@ -44,6 +44,43 @@ var options = {
   sort: { updatedAt: -1 },
 };
 let authorNames = [];
+
+const server = require("http").createServer();
+const io = require("socket.io")(server, {
+  transports: ["websocket", "polling"],
+});
+
+const users = {};
+let globalClient;
+
+io.on("connection", (client) => {
+  globalClient = client;
+  client.on("username", (nick) => {
+    const user = {
+      name: nick,
+      id: client.id,
+    };
+    users[client.id] = user;
+    io.emit("connected", user);
+    io.emit("users", Object.values(users));
+  });
+
+  // client.on("send", (message) => {
+  //   io.emit("message", {
+  //     text: message,
+  //     date: new Date().toISOString(),
+  //     user: users[client.id],
+  //   });
+  // });
+
+  client.on("disconnect", () => {
+    const username = users[client.id];
+    delete users[client.id];
+    io.emit("disconnected", client.id);
+  });
+});
+server.listen(4000);
+
 module.exports = function (router) {
   router.get("/blogs", async (req, res) => {
     let data = await BlogModel.paginate({}, options);
@@ -409,12 +446,14 @@ module.exports = function (router) {
   // });
 
   router.post("/comment", authorized, async function (req, res) {
+    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     let { comment } = req.body;
-    let { level } = req.body;
+    // let comment = yorum;
+    // let { level } = req.body;
     let { blogId } = req.body;
     let { previousCommentId } = req.body;
 
-    console.log(level);
+    // console.log(level);
 
     if (comment.length < 1 || comment.length > 1000)
       return res.status(422).json();
@@ -428,10 +467,6 @@ module.exports = function (router) {
       comment: comment,
       blogId: blogId,
       level: level,
-      previousCommentId:
-        previousCommentId === undefined
-          ? undefined
-          : mongoose.Types.ObjectId(previousCommentId),
       touched: Date.now(),
       blogAuthorId: blog.blogAuthorId,
       commentAuthorId: req.userId,
@@ -439,73 +474,170 @@ module.exports = function (router) {
 
     await newComment.save();
 
-    if (newComment.level === 0) {
-      await newComment.save();
+    // let savedAndRefreshedComments = await CommentModel.find({
+    //   blogId: req.params.blogId,
+    // })
+    //   .populate([
+    //     {
+    //       path: "commentAuthorId",
+    //       select: "userName",
+    //       model: "User",
+    //     },
+    //   ])
+    //   .select(["comment", "level", "touched", "createdAt", "previousCommentId"])
+    //   .sort({ touched: 1 })
+    //   .exec();
 
-      return res.status(201).send();
-    }
+    let commentSaved = await CommentModel.findById(newComment._id)
+      .populate([
+        {
+          path: "commentAuthorId",
+          select: "userName",
+          model: "User",
+        },
+      ])
+      .select(["comment", "touched", "createdAt"])
+      .sort({ touched: 1 })
+      .exec();
 
-    let modelOfOuter = await CommentModel.findOne({
-      _id: newComment.previousCommentId,
-    }).exec();
-
-    let modelOfMoreOuterId = modelOfOuter._id;
-
-    let modelOfMoreOuter = await CommentModel.findOne({
-      _id: modelOfOuter.previousCommentId,
-    }).exec();
-
-    modelOfOuter.nextCommentId = newComment._id;
-    await modelOfOuter.save();
-
-    let modelOfOuterNextCommentId = modelOfOuter.nextCommentId;
-
-    let arry = [];
-    let temp;
-    let flag = true;
-    let levelState = -1;
-    while (true) {
-      if (flag) {
-        temp = await CommentModel.findOne({
-          _id: newComment._id,
-        }).exec();
-        arry.push(temp);
-        if (temp === null) break;
-        levelState = temp.level;
-      } else {
-        temp = await CommentModel.findOne({
-          _id: temp,
-        }).exec();
-        levelState = arry.level;
-        arry.push(temp);
-      }
-      // console.log("temp ", temp);
-      temp = temp?.previousCommentId;
-      flag = false;
-      if (temp === undefined) break;
-    }
-
-    let ids = Object.values(arry).map((key) => key._id);
-    // console.log("ids ", ids);
-
-    const filter = {
-      $and: [{ _id: { $in: ids } }, { _id: { $ne: newComment.nextCommentId } }],
-    };
-
-    // const filter = {
-    //   _id: { $in: ids },
-    // };
-
-    const update = { touched: new Date() };
-
-    let doc = await CommentModel.updateMany(filter, update).exec();
-    // console.log(doc);
-
-    // doc = await CommentModel.find(filter).exec();
-    // console.log(doc);
-
+    io.emit("singleCommentBySocketIO", {
+      singleCommentBySocketIO: commentSaved,
+      // date: new Date().toISOString(),
+      // user: users[globalClient.id],
+    });
     return res.status(201).send();
   });
+
+  // router.post("/comment", authorized, async function (req, res) {
+  //   let { comment } = req.body;
+  //   // let comment = yorum;
+  //   let { level } = req.body;
+  //   let { blogId } = req.body;
+  //   let { previousCommentId } = req.body;
+
+  //   // console.log(level);
+
+  //   if (comment.length < 1 || comment.length > 1000)
+  //     return res.status(422).json();
+
+  //   level = req.body.level === null ? 0 : level;
+
+  //   let blog = await BlogModel.findById(blogId).exec();
+
+  //   let newComment = new CommentModel({
+  //     _id: mongoose.Types.ObjectId(),
+  //     comment: comment,
+  //     blogId: blogId,
+  //     level: level,
+  //     previousCommentId:
+  //       previousCommentId === undefined
+  //         ? undefined
+  //         : mongoose.Types.ObjectId(previousCommentId),
+  //     touched: Date.now(),
+  //     blogAuthorId: blog.blogAuthorId,
+  //     commentAuthorId: req.userId,
+  //   });
+
+  //   await newComment.save();
+
+  //   if (newComment.level === 0) {
+  //     await newComment.save();
+
+  //     let savedAndRefreshedComments = await CommentModel.find({
+  //       blogId: req.params.blogId,
+  //     })
+  //       .populate([
+  //         {
+  //           path: "commentAuthorId",
+  //           select: "userName",
+  //           model: "User",
+  //         },
+  //       ])
+  //       .select([
+  //         "comment",
+  //         "level",
+  //         "touched",
+  //         "createdAt",
+  //         "previousCommentId",
+  //       ])
+  //       .sort({ touched: 1 })
+  //       .exec();
+
+  //     io.emit("commentsBySocketIO", {
+  //       commentsBySocketIO: savedAndRefreshedComments,
+  //       date: new Date().toISOString(),
+  //       user: users[globalClient.id],
+  //     });
+  //     return res.status(201).send();
+  //   }
+
+  //   let modelOfOuter = await CommentModel.findOne({
+  //     _id: newComment.previousCommentId,
+  //   }).exec();
+
+  //   let modelOfMoreOuterId = modelOfOuter._id;
+
+  //   let modelOfMoreOuter = await CommentModel.findOne({
+  //     _id: modelOfOuter.previousCommentId,
+  //   }).exec();
+
+  //   modelOfOuter.nextCommentId = newComment._id;
+  //   await modelOfOuter.save();
+
+  //   let modelOfOuterNextCommentId = modelOfOuter.nextCommentId;
+
+  //   let arry = [];
+  //   let temp;
+  //   let flag = true;
+  //   let levelState = -1;
+  //   while (true) {
+  //     if (flag) {
+  //       temp = await CommentModel.findOne({
+  //         _id: newComment._id,
+  //       }).exec();
+  //       arry.push(temp);
+  //       if (temp === null) break;
+  //       levelState = temp.level;
+  //     } else {
+  //       temp = await CommentModel.findOne({
+  //         _id: temp,
+  //       }).exec();
+  //       levelState = arry.level;
+  //       arry.push(temp);
+  //     }
+  //     // console.log("temp ", temp);
+  //     temp = temp?.previousCommentId;
+  //     flag = false;
+  //     if (temp === undefined) break;
+  //   }
+
+  //   let ids = Object.values(arry).map((key) => key._id);
+  //   // console.log("ids ", ids);
+
+  //   const filter = {
+  //     $and: [{ _id: { $in: ids } }, { _id: { $ne: newComment.nextCommentId } }],
+  //   };
+
+  //   // const filter = {
+  //   //   _id: { $in: ids },
+  //   // };
+
+  //   const update = { touched: new Date() };
+
+  //   await CommentModel.updateMany(filter, update).exec();
+  //   // console.log(doc);
+
+  //   let doc = await CommentModel.find(filter).exec();
+  //   console.log("doc ", doc);
+
+  //   io.emit("commentsBySocketIO", {
+  //     commentsBySocketIO: doc,
+  //     date: new Date().toISOString(),
+  //     user: users[globalClient.id],
+  //   });
+
+  //   return res.status(201).send();
+  // });
 
   router.get("/comments/:blogId", authorized, async function (req, res) {
     let comments = await CommentModel.find({
@@ -518,16 +650,15 @@ module.exports = function (router) {
           model: "User",
         },
       ])
-      .select([
-        "comment",
-        "level",
-        "touched",
-        "createdAt",
-        "previousCommentId",
-        "maxLevelBelow",
-      ])
-      .sort({ touched: -1 })
+      .select(["comment", "level", "touched", "createdAt", "previousCommentId"])
+      .sort({ touched: 1 })
       .exec();
+
+    // io.emit("commentsBySocketIO", {
+    //   commentsBySocketIO: comments,
+    //   date: new Date().toISOString(),
+    //   user: users[globalClient.id],
+    // });
     res.status(200).json(comments);
   });
   // router.get("/comments/:blogId", authorized, async function (req, res) {
@@ -604,11 +735,16 @@ module.exports = function (router) {
     if (passed1 || passed2) {
       CommentModel.findOneAndRemove(
         { _id: req.params.commentId },
-        function (err, image) {
+        function (err, model) {
           if (err) {
             console.log(err.message);
           } else {
             console.log("comment removed");
+            io.emit("commentRemovedBySocketIO", {
+              commentRemovedBySocketIO: model._id,
+              // date: new Date().toISOString(),
+              // user: users[globalClient.id],
+            });
             res.status(200).json({ succes: true });
           }
         }
