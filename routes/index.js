@@ -1,5 +1,38 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const app = express();
+const router = express.Router();
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+  transports: ["websocket", "polling"],
+});
+const users = {};
+io.on("connection", (client) => {
+  client.on("username", (username) => {
+    console.log(username);
+    const user = {
+      name: username,
+      id: client.id,
+    };
+    users[client.id] = user;
+    io.emit("connected", user);
+    io.emit("users", Object.values(users));
+  });
+
+  // client.on("send", (message) => {
+  //   io.emit("message", {
+  //     text: message,
+  //     date: new Date().toISOString(),
+  //     user: users[client.id],
+  //   });
+  // });
+
+  client.on("disconnect", () => {
+    const username = users[client.id];
+    delete users[client.id];
+    io.emit("disconnected", client.id);
+  });
+});
+server.listen(4000);
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
@@ -20,7 +53,7 @@ router.get("/routes", (req, res, next) => {
   res.send("<h1>List of routes.</h1>" + JSON.stringify(routes));
 });
 
-require("./text")(router);
+require("./text")(router, io);
 require("./users")(router);
 require("./image")(router);
 

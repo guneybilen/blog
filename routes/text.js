@@ -45,43 +45,43 @@ var options = {
 };
 let authorNames = [];
 
-const server = require("http").createServer();
-const io = require("socket.io")(server, {
-  transports: ["websocket", "polling"],
-});
+// const server = require("http").createServer();
+// const io = require("socket.io")(server, {
+//   transports: ["websocket", "polling"],
+// });
 
-const users = {};
-let globalClient;
+// const users = {};
+// let globalClient;
 
-io.on("connection", (client) => {
-  globalClient = client;
-  client.on("username", (nick) => {
-    const user = {
-      name: nick,
-      id: client.id,
-    };
-    users[client.id] = user;
-    io.emit("connected", user);
-    io.emit("users", Object.values(users));
-  });
+// io.on("connection", (client) => {
+//   globalClient = client;
+//   client.on("username", (nick) => {
+//     const user = {
+//       name: nick,
+//       id: client.id,
+//     };
+//     users[client.id] = user;
+//     io.emit("connected", user);
+//     io.emit("users", Object.values(users));
+//   });
 
-  // client.on("send", (message) => {
-  //   io.emit("message", {
-  //     text: message,
-  //     date: new Date().toISOString(),
-  //     user: users[client.id],
-  //   });
-  // });
+//   // client.on("send", (message) => {
+//   //   io.emit("message", {
+//   //     text: message,
+//   //     date: new Date().toISOString(),
+//   //     user: users[client.id],
+//   //   });
+//   // });
 
-  client.on("disconnect", () => {
-    const username = users[client.id];
-    delete users[client.id];
-    io.emit("disconnected", client.id);
-  });
-});
-server.listen(4000);
+//   client.on("disconnect", () => {
+//     const username = users[client.id];
+//     delete users[client.id];
+//     io.emit("disconnected", client.id);
+//   });
+// });
+// server.listen(4000);
 
-module.exports = function (router) {
+module.exports = function (router, io) {
   router.get("/blogs", async (req, res) => {
     let data = await BlogModel.paginate({}, options);
 
@@ -446,7 +446,7 @@ module.exports = function (router) {
   // });
 
   router.post("/comment", authorized, async function (req, res) {
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ router post /comment");
     let { comment } = req.body;
     // let comment = yorum;
     // let { level } = req.body;

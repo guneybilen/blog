@@ -1,5 +1,5 @@
 var createError = require("http-errors");
-var express = require("express");
+const express = require("express");
 var path = require("path");
 var logger = require("morgan");
 var favicon = require("serve-favicon");
@@ -19,7 +19,36 @@ const { duration } = require("moment");
 
 require("dotenv").config();
 
-var app = express();
+const app = express();
+
+// const server = require("http").createServer(app);
+// const io = require("socket.io")(server, {
+//   transports: ["websocket", "polling"],
+// });
+
+// const users = {};
+
+// io.on("connection", (client) => {
+//   client.on("username", (nick) => {
+//     console.log("333333333333333333333333333333333333333333333333333  ", nick);
+//     const user = {
+//       name: nick,
+//       id: client.id,
+//     };
+//     users[client.id] = user;
+//     io.emit("connected", user);
+//     io.emit("users", Object.values(users));
+//   });
+
+//   client.on("disconnect", () => {
+//     console.log("disconnected");
+//     const username = users[client.id];
+//     delete users[client.id];
+//     io.emit("disconnected", client.id);
+//   });
+// });
+
+// server.listen(4000);
 
 const limiter = rateLimit({
   max: 300,
@@ -70,7 +99,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(function (req, res, next) {
-  console.log(req.headers.origin);
+  // console.log(req.headers.origin);
   res.header("Access-Control-Allow-Origin", req.headers.origin);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
   res.header(

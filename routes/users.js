@@ -1,4 +1,4 @@
-var express = require("express");
+// var express = require("express");
 // var app = express();
 
 // const parseForm = express.urlencoded({ extended: false });
@@ -21,7 +21,7 @@ function clear(req, res, next) {
 }
 
 module.exports = function (router) {
-  router.get("/sign_out", UserController.sign_out);
+  router.get("/sign_out", authorized, UserController.sign_out);
 
   /* GET users listing. */
   router.get("/", function (req, res, next) {
