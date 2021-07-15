@@ -238,7 +238,7 @@ module.exports = function (router, io) {
 
       let user = await UserModel.findById(req.userId).exec();
 
-      console.log(user);
+      // console.log(user);
 
       let newBlog = new BlogModel({
         _id: mongoose.Types.ObjectId(),
@@ -248,7 +248,7 @@ module.exports = function (router, io) {
         body: body,
       });
 
-      console.log(newBlog);
+      // console.log(newBlog);
       // let savedBlog = await newBlog.save();
 
       user.blogId = newBlog._id;
@@ -446,7 +446,7 @@ module.exports = function (router, io) {
   // });
 
   router.post("/comment", authorized, async function (req, res) {
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ router post /comment");
+    // console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ router post /comment");
     let { comment } = req.body;
     // let comment = yorum;
     // let { level } = req.body;
