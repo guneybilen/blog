@@ -302,33 +302,19 @@ const userController = {
       return res.status(400).send();
     }
 
-    let user;
-    let blog;
     try {
-      const session1 = await mongoose.startSession();
-      await session1.withTransaction(async () => {
-        user = await UserModel.findOne({
-          userName: userForSearch.userName,
-        }).session(session1);
-        console.log("user ", user);
-        assert.ok(user.$session());
-        user.userName = changedName;
+      const filter = { _id: req.userId };
+      const update = { userName: changedName };
 
-        blog = await BlogModel.findOne({
-          author: userForSearch.userName,
-        }).session(session1);
-        assert.ok(blog.$session());
-        blog.author = changedName;
-        assert.strictEqual(user.userName, blog.author);
-        await user.save({ validateBeforeSave: false });
-        await blog.save();
-        assert.strictEqual(user.userName, blog.author);
-      });
+      // `doc` is the document _before_ `update` was applied
+      let doc = await UserModel.findOneAndUpdate(filter, update);
 
-      session1.endSession();
+      //retrieve the updated document
+      doc = await UserModel.findOne(filter);
+
       return res.status(200).json({
         message: "username succseesfully changed",
-        userName: changedName,
+        userName: doc.userName,
       });
     } catch (e) {
       console.log(e.message);
@@ -338,11 +324,94 @@ const userController = {
     }
   },
 
+  ////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  // BELOW IS AN EXAMPLE FOR TRANSACTION USAGE FOR MONGODB
+  //
+  //
+  ////////////////////////////////////////////////////////////////////////////////////
+  // blog model changed. there is no need for transactions like the one below anymore.
+  // changeUsername: async (req, res, next) => {
+  //   let { changedName: changedNameTemp } = req.body;
+  //   let { changedNameConfirm: changedNameConfirmTemp } = req.body;
+
+  //   changedName = changedNameTemp.trimLeft().trimRight().toLowerCase();
+  //   changedNameConfirm = changedNameConfirmTemp
+  //     .trimLeft()
+  //     .trimRight()
+  //     .toLowerCase();
+
+  //   if (
+  //     changedName.length < USERNAME_LENGTH_MIN ||
+  //     changedName.length > USERNAME_LENGTH_MAX
+  //   ) {
+  //     return res.status(411).send();
+  //   }
+
+  //   if (changedName !== changedNameConfirm) {
+  //     return res.status(403).json({
+  //       error: "changedName and changedNameConfirm must be equal",
+  //     });
+  //   }
+
+  //   let userForSearch = await UserModel.findById(req.userId).exec();
+
+  //   if (userForSearch.userName === changedName) {
+  //     return res.status(422).send();
+  //   }
+
+  //   let userForUserName = await UserModel.findOne({
+  //     userName: changedName,
+  //   }).exec();
+
+  //   if (userForUserName) {
+  //     return res.status(400).send();
+  //   }
+
+  //   let user;
+  //   let blog;
+  //   try {
+  //     const session1 = await mongoose.startSession();
+  //     await session1.withTransaction(async () => {
+  //       user = await UserModel.findOne({
+  //         userName: userForSearch.userName,
+  //       }).session(session1);
+  //       console.log("user ", user);
+  //       assert.ok(user.$session());
+  //       user.userName = changedName;
+
+  //       blog = await BlogModel.findOne({
+  //         blogAuthorId: userForSearch.userName,
+  //       }).session(session1);
+  //       console.log("blog ", blog);
+  //       assert.ok(blog.$session());
+  //       blog.author = changedName;
+  //       assert.strictEqual(user.userName, blog.author);
+  //       await user.save({ validateBeforeSave: false });
+  //       await blog.save();
+  //       assert.strictEqual(user.userName, blog.author);
+  //     });
+
+  //     session1.endSession();
+  //     return res.status(200).json({
+  //       message: "username succseesfully changed",
+  //       userName: changedName,
+  //     });
+  //   } catch (e) {
+  //     console.log(e.message);
+  //     return res.status(500).json({
+  //       error: e.message,
+  //     });
+  //   }
+  // },
+
   changePassword: async (req, res, next) => {
     let { password } = req.body;
     let { passwordConfirm } = req.body;
 
-    console.log("password ", password);
+    // console.log("password ", password);
+
     if (
       password.length < PASSWORD_LENGTH_MIN ||
       password.length > PASSWORD_LENGTH_MAX
