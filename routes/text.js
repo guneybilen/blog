@@ -343,8 +343,10 @@ module.exports = function (router, io) {
       blog.title = title;
       await blog.save();
 
-      if (req.files.length === 0) return res.json({ no_image_action: true });
-      if (req.files.length > 1)
+      if (!req.files) return res.json({ no_image_action: true });
+      if (req.files && req.files.length === 0)
+        return res.json({ no_image_action: true });
+      if (req.files && req.files.length > 1)
         return res.json({ too_many_pictures_at_once: true });
 
       let imageIds = blog.imageId;
