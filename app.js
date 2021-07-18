@@ -5,7 +5,12 @@ var logger = require("morgan");
 var favicon = require("serve-favicon");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
+
+// xss-xlean package creates problems on sanitizing. I uninstalled xss-clean.
+// const xss = require("xss-clean");
+
+const { xss } = require("express-xss-sanitizer");
+
 // var hpp = require("hpp");
 var cookieFlashMessages = require("cookie-flash-messages");
 const cors = require("cors");

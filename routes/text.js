@@ -227,6 +227,7 @@ module.exports = function (router, io) {
     async (req, res) => {
       let { body } = req.body;
       let { title } = req.body;
+      // console.log("req.body ", body);
       if (title.length < TITLE_LENGTH_MIN || title.length > TITLE_LENGTH_MAX)
         return res.json({ title_too_short_or_long: true });
 
