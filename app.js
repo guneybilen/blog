@@ -55,7 +55,7 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: `http://localhost:${process.env.PORT}`,
     optionsSuccessStatus: HttpStatus.OK,
     credentials: true,
   })
