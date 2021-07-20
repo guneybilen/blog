@@ -26,34 +26,7 @@ require("dotenv").config();
 
 const app = express();
 
-// const server = require("http").createServer(app);
-// const io = require("socket.io")(server, {
-//   transports: ["websocket", "polling"],
-// });
-
-// const users = {};
-
-// io.on("connection", (client) => {
-//   client.on("username", (nick) => {
-//     console.log("333333333333333333333333333333333333333333333333333  ", nick);
-//     const user = {
-//       name: nick,
-//       id: client.id,
-//     };
-//     users[client.id] = user;
-//     io.emit("connected", user);
-//     io.emit("users", Object.values(users));
-//   });
-
-//   client.on("disconnect", () => {
-//     console.log("disconnected");
-//     const username = users[client.id];
-//     delete users[client.id];
-//     io.emit("disconnected", client.id);
-//   });
-// });
-
-// server.listen(4000);
+app.use(express.static(path.join(__dirname, "build")));
 
 const limiter = rateLimit({
   max: 300,
@@ -119,17 +92,13 @@ app.use(function (req, res, next) {
   );
   next();
 });
-// app.use(require("./routes"));
+
 app.use(require("./routes"));
 
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static("client/build"));
-//   a;
-
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-//   });
-// }
+// the following line must be after app.use routes line
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
