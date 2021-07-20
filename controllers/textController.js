@@ -2,7 +2,7 @@ const mongoose = require("../mongoose");
 const UserModel = require("../models/user");
 const BlogModel = require("../models/blog");
 const fs = require("fs");
-const { cookieMiddleware } = require("../middleWare/");
+const { cookieMiddleware } = require("../middleware/");
 var moment = require("moment");
 moment().format();
 
