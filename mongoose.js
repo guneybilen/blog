@@ -21,26 +21,6 @@
 
 // module.exports = mongoose;
 
-// mongoose.Promise = global.Promise;
-// mongoose
-//   .connect(
-//     `mongodb+srv://theUser:poiu0987@cluster0.b9ok8.mongodb.net/yetenek?retryWrites=true&w=majority`,
-//     {
-//       useNewUrlParser: true,
-//       useUnifiedTopology: true,
-//       useFindAndModify: false,
-//       useCreateIndex: true,
-//     }
-//   )
-//   .catch((error) => {
-//     console.log(error.message);
-//     winston.error(error);
-//   });
-
-// mongoose.connection.on("open", () => winston.info("MongoDB connected"));
-
-// module.exports = mongoose;
-
 const mongoose = require("mongoose");
 const winston = require("winston");
 
