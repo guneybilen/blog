@@ -54,11 +54,7 @@ app.use(xss());
 // app.uss(hpp({ whitelist: ["duration"] }));
 
 // set security HTTP headers
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-  })
-);
+app.use(helmet());
 
 // app.use(
 //   contentSecurityPolicy({
