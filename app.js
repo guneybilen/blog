@@ -54,19 +54,23 @@ app.use(xss());
 // app.uss(hpp({ whitelist: ["duration"] }));
 
 // set security HTTP headers
-app.use(helmet());
-
 app.use(
-  contentSecurityPolicy({
-    "default-src": ["'self'"],
-    "connect-src": ["'self'", "blob:", "wss:", "websocket.domain"],
-    "img-src": ["'self'", "data:"],
-    "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
-    reportOnly: false,
-    setAllHeaders: false,
-    safari5: false,
+  helmet({
+    contentSecurityPolicy: false,
   })
 );
+
+// app.use(
+//   contentSecurityPolicy({
+//     "default-src": ["'self'"],
+//     "connect-src": ["'self'", "blob:", "wss:", "websocket.domain"],
+//     "img-src": ["'self'", "data:"],
+//     "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
+//     reportOnly: false,
+//     setAllHeaders: false,
+//     safari5: false,
+//   })
+// );
 
 app.use(cookieParser());
 app.use(
