@@ -75,7 +75,7 @@ app.use(
 app.use(cookieParser());
 app.use(
   cors({
-    origin: `${process.env.PRODUCTION_SERVER_URL}`,
+    origin: process.env.PRODUCTION_SERVER_URL,
     optionsSuccessStatus: HttpStatus.OK,
     credentials: true,
   })
