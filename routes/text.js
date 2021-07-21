@@ -131,10 +131,10 @@ module.exports = function (router, io) {
 
     let sameUser;
     if (resultBool.includes(true)) {
-      console.log("user passed authorization test");
+      //console.log("user passed authorization test");
       sameUser = true;
     } else {
-      console.log("user failed authorization test");
+      //console.log("user failed authorization test");
       sameUser = false;
     }
 
@@ -332,12 +332,12 @@ module.exports = function (router, io) {
       let user = await UserModel.findById(req.userId).exec();
       let blog = await BlogModel.findById(id).exec();
 
-      let sameUser = user.userName === blog.author;
-      if (sameUser) {
-        console.log("user passed authorization test");
-      } else {
-        console.log("user failed authorization test");
-      }
+      //let sameUser = user.userName === blog.author;
+      //if (sameUser) {
+        //console.log("user passed authorization test");
+      //} else {
+        //console.log("user failed authorization test");
+      //}
 
       blog.body = body;
       blog.title = title;

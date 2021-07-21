@@ -448,7 +448,7 @@ const userController = {
   },
 
   confirmAccount: async (req, res, next) => {
-    console.log("req.params.token", req.params.token);
+    //console.log("req.params.token", req.params.token);
 
     let user = await UserModel.findOne({
       confirmationCode: req.params.token,

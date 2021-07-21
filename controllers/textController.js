@@ -90,7 +90,9 @@ const textController = {
     let array = (req.files.photos || []).filter(function (n) {
       return n != undefined;
     });
-    console.log("array ", array);
+
+    //console.log("array ", array);
+
     if (array !== []) {
       array.forEach((image) => {
         let obj = {
@@ -128,8 +130,10 @@ const textController = {
     let blog = await BlogModel.findOne({ userId: res.locals.user })
       .sort({ updatedAt: -1 })
       .exec();
+
     // console.log("res.locals ", res.locals);
     // console.log("blog ", blog);
+
     res.render("savedBlog", {
       // kodName: res.locals.user,
       blog: blog,
@@ -166,7 +170,8 @@ const textController = {
     }
   },
   deleteImageForBlog: async (req, res, next) => {
-    console.log("req.body.payload ", req.body.payload);
+    //console.log("req.body.payload ", req.body.payload);
+
     try {
       let user = await BlogModel.findOneAndUpdate(
         { userId: res.locals.user },
