@@ -1,7 +1,8 @@
 const sendEmailService = require("./sendEmailService");
+const { URL } = require("./urls");
 
 const forgotPasswordMailService = async (res, user, resetToken) => {
-  const resetURL = `${process.env.CLIENT_URL}/resetPassword/${resetToken}`;
+  const resetURL = `${URL}/resetPassword/${resetToken}`;
   const message = `basak's blog\nşifrenizi mi unuttunuz? lütfen\n${resetURL}\nlinkini kopyalıp tarayıcınıza yapıstırın.\n\nGönderdiğimiz link 10 dakika sonra geçersiz olacaktır.\nEğer bu emaili hata sonucu aldıysanız veya şifrenizi hatırlarsanız\nbu emaili dikkate almayınız`;
 
   const messageHTML =

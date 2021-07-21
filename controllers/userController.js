@@ -468,7 +468,7 @@ const userController = {
 
       cookieService(res, payload);
 
-      res.redirect("http://localhost:3000");
+      res.redirect("/");
 
       // return res.status(201).json({
       //   userName: user.userName,
