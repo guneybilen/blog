@@ -32,7 +32,7 @@ io.on("connection", (client) => {
     io.emit("disconnected", client.id);
   });
 });
-server.listen("https://basakblog.herokuapp.com/");
+server.listen("http://localhost:3000");
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
