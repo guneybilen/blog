@@ -33,7 +33,7 @@ io.on("connection", (client) => {
   });
 });
 
-server.listen("wss://basakblog.herokuapp.com/socket.io/");
+server.listen("wss://basakblog.herokuapp.com/");
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
