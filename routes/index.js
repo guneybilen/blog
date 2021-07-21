@@ -32,7 +32,9 @@ io.on("connection", (client) => {
     io.emit("disconnected", client.id);
   });
 });
-server.listen(`${process.env.PRODUCTION_SERVER_URL}`);
+server.listen(
+  `"ws://basakblog.herokuapp.com/socket.io/?EIO=4&transport=websocket"`
+);
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
