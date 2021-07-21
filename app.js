@@ -21,7 +21,7 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const { duration } = require("moment");
 // const winstonLogger = require("./service");
-const csp = require("helmet-csp");
+const contentSecurityPolicy = require("helmet-csp");
 
 require("dotenv").config();
 
@@ -56,13 +56,17 @@ app.use(xss());
 // set security HTTP headers
 app.use(helmet());
 
-app.use((req, res, next) => {
-  let wsSrc = (req.protocol === "http" ? "ws://" : "wss://") + req.get("host");
-
-  csp({
-    connectSrc: ["'self'", wsSrc],
-  })(req, res, next);
-});
+app.use(
+  helmet.csp({
+    "default-src": ["'self'"],
+    "connect-src": ["'self'", "blob:", "wss:", "websocket.domain"],
+    "img-src": ["'self'", "data:"],
+    "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
+    reportOnly: false,
+    setAllHeaders: false,
+    safari5: false,
+  })
+);
 
 app.use(cookieParser());
 app.use(
