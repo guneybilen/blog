@@ -33,9 +33,7 @@ io.on("connection", (client) => {
   });
 });
 
-var HOST = window.location.origin;
-
-server.listen(HOST);
+server.listen(process.env.PRODUCTION_SERVER_URL);
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
