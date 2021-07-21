@@ -21,6 +21,7 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const { duration } = require("moment");
 // const winstonLogger = require("./service");
+import csp from "helmet-csp";
 
 require("dotenv").config();
 
@@ -55,14 +56,13 @@ app.use(xss());
 // set security HTTP headers
 app.use(helmet());
 
-app.use(
-  helmet.contentSecurityPolicy({
-    connectSrc: [
-      "'self'",
-      "wss://basakblog.herokuapp.com/socket.io/?EIO=4&transport=websocket",
-    ],
-  })
-);
+app.use((req, res, next) => {
+  let wsSrc = (req.protocol === "http" ? "ws://" : "wss://") + req.get("host");
+
+  csp({
+    connectSrc: ["'self'", wsSrc],
+  })(req, res, next);
+});
 
 app.use(cookieParser());
 app.use(
