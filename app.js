@@ -5,7 +5,6 @@ var logger = require("morgan");
 var favicon = require("serve-favicon");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
-const csp = require("helmet-csp");
 
 // xss-xlean package creates problems on sanitizing. I uninstalled xss-clean.
 // const xss = require("xss-clean");
@@ -54,13 +53,11 @@ app.use(xss());
 // set security HTTP headers
 app.use(helmet());
 
-app.use((req, res, next) => {
-  let wsSrc = (req.protocol === "http" ? "ws://" : "wss://") + req.get("host");
-
-  csp({
-    connectSrc: ["'self'", wsSrc],
-  })(req, res, next);
-});
+app.use(
+  helmet.contentSecurityPolicy({
+    connectSrc: ["'self'", "ws://" + process.env.PRODUCTION_SERVER_URL],
+  })
+);
 
 app.use(cookieParser());
 app.use(
