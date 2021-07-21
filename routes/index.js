@@ -33,7 +33,7 @@ io.on("connection", (client) => {
   });
 });
 
-server.listen(process.env.PRODUCTION_SERVER_URL);
+server.listen(process.env.PORT);
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
