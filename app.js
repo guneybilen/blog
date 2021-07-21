@@ -21,7 +21,7 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const { duration } = require("moment");
 // const winstonLogger = require("./service");
-import csp from "helmet-csp";
+const csp = require("helmet-csp");
 
 require("dotenv").config();
 
