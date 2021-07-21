@@ -32,7 +32,7 @@ io.on("connection", (client) => {
     io.emit("disconnected", client.id);
   });
 });
-server.listen(`${process.env.PORT}`);
+server.listen("http://localhost");
 
 router.get("/routes", (req, res, next) => {
   var routes = [];
