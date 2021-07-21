@@ -26,6 +26,8 @@ require("dotenv").config();
 
 const app = express();
 
+// app.set("view engine", "html");
+
 app.use(express.static(path.join(__dirname, "build")));
 
 const limiter = rateLimit({
@@ -76,12 +78,11 @@ app.use(passport.initialize());
 app.use(hidePoweredBy({ setTo: "PHP 5.2.0" }));
 
 // view engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
+// app.set("views", path.join(__dirname, "views"));
+// app.set("view engine", "ejs");
 
 // app.use(logger("dev"));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
 
 app.use(function (req, res, next) {
   // console.log(req.headers.origin);
@@ -100,11 +101,13 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use(require("./routes"));
+// app.use("/birds", birds);
+app.use("/api", require("./routes"));
+// app.use(require("./routes"));
 
-// the following line must be after app.use routes line
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+app.get("/*", function (req, res) {
+  console.log(path.join(__dirname, "/build/index.html"));
+  res.sendFile(path.join(__dirname, "/build/index.html"));
 });
 
 // catch 404 and forward to error handler
