@@ -57,7 +57,10 @@ app.use(helmet());
 
 app.use(
   helmet.contentSecurityPolicy({
-    connectSrc: ["'self'", "wss://basakblog.herokuapp.com/"],
+    connectSrc: [
+      "'self'",
+      "wss://basakblog.herokuapp.com/socket.io/?EIO=4&transport=websocket",
+    ],
   })
 );
 
