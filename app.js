@@ -57,7 +57,7 @@ app.use(xss());
 app.use(helmet());
 
 app.use(
-  helmet.csp({
+  contentSecurityPolicy({
     "default-src": ["'self'"],
     "connect-src": ["'self'", "blob:", "wss:", "websocket.domain"],
     "img-src": ["'self'", "data:"],
