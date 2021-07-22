@@ -61,7 +61,6 @@ app.use(
     "default-src": ["'self'"],
     "connect-src": ["'self'", "blob:", "ws", "wss:", "websocket.domain"],
     "img-src": ["'self'", "data:"],
-    "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
     reportOnly: false,
     safari5: false,
   })
