@@ -8,7 +8,7 @@ var app = require("../app");
 var debug = require("debug")("ytnk-backend:server");
 var server = require("http").createServer(app);
 const io = require("socket.io")(server, {
-  transports: ["websocket", "polling"],
+  transports: ["websocket"],
 });
 
 const users = {};
