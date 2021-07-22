@@ -6,7 +6,38 @@
 
 var app = require("../app");
 var debug = require("debug")("ytnk-backend:server");
-var http = require("http");
+var server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+  transports: ["websocket", "polling"],
+});
+
+const users = {};
+io.on("connection", (client) => {
+  client.on("username", (username) => {
+    console.log(username);
+    const user = {
+      name: username,
+      id: client.id,
+    };
+    users[client.id] = user;
+    io.emit("connected", user);
+    io.emit("users", Object.values(users));
+  });
+
+  // client.on("send", (message) => {
+  //   io.emit("message", {
+  //     text: message,
+  //     date: new Date().toISOString(),
+  //     user: users[client.id],
+  //   });
+  // });
+
+  client.on("disconnect", () => {
+    const username = users[client.id];
+    delete users[client.id];
+    io.emit("disconnected", client.id);
+  });
+});
 
 /**
  * Get port from environment and store in Express.
@@ -19,7 +50,7 @@ app.set("port", port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+// var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -84,3 +115,5 @@ function onListening() {
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
+
+module.exports = { io };

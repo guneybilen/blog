@@ -1,5 +1,5 @@
 const sendEmailService = require("./sendEmailService");
-const { URL } = require("./urls");
+const URL = require("./urls");
 
 const forgotPasswordMailService = async (res, user, resetToken) => {
   const resetURL = `${URL}/resetPassword/${resetToken}`;

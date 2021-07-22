@@ -1,5 +1,5 @@
 const sendEmailService = require("./sendEmailService");
-const { URL } = require("./urls");
+const URL = require("./urls");
 
 const signupMailService = async (res, userCreated, signupConfirmToken) => {
   try {

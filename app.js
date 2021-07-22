@@ -56,17 +56,16 @@ app.use(xss());
 // set security HTTP headers
 app.use(helmet());
 
-// app.use(
-//   contentSecurityPolicy({
-//     "default-src": ["'self'"],
-//     "connect-src": ["'self'", "blob:", "wss:", "websocket.domain"],
-//     "img-src": ["'self'", "data:"],
-//     "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
-//     reportOnly: false,
-//     setAllHeaders: false,
-//     safari5: false,
-//   })
-// );
+app.use(
+  contentSecurityPolicy({
+    "default-src": ["'self'"],
+    "connect-src": ["'self'", "blob:", "ws", "wss:", "websocket.domain"],
+    "img-src": ["'self'", "data:"],
+    "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"],
+    reportOnly: false,
+    safari5: false,
+  })
+);
 
 app.use(cookieParser());
 app.use(
@@ -76,6 +75,14 @@ app.use(
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: "http://localhost:8000",
+//     optionsSuccessStatus: HttpStatus.OK,
+//     credentials: true,
+//   })
+// );
 
 // app.use(cors());
 
@@ -113,7 +120,7 @@ app.use("/api", require("./routes"));
 // app.use(require("./routes"));
 
 app.get("/*", function (req, res) {
-  console.log(path.join(__dirname, "/build/index.html"));
+  // console.log(path.join(__dirname, "/build/index.html"));
   res.sendFile(path.join(__dirname, "/build/index.html"));
 });
 
